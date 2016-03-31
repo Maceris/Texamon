@@ -1,0 +1,22 @@
+Map loader
+==========
+Name : TMX LOADER FOR ANDROID Second beta release - 0.8.1
+By: Written by David Iserovich
+Link: https://github.com/davidmi/Android-TMX-Loader
+License: "Decision of distribution license pending, meanwhile you are free to use the code if you attribute credit."
+
+Map editor
+==========
+Name: Tiled (http://www.mapeditor.org/)
+Link: https://github.com/bjorn/tiled
+License: GPL 2.0
+
+Art
+==========
+
+Tile set 
+----------
+Name: Basic map tile 32x32 v3.1
+By: Silver IV
+Link: http://opengameart.org/content/basic-map-32x32-by-silver-iv
+License: GPL 2.0 / GPL 3.0

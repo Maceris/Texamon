@@ -16,6 +16,14 @@
  *******************************************************************************/
 package com.Omega.menus;
 
+/**
+ * The area of a parent window or screen that a window should call the origin
+ * with respect to displacement. Centered alignments ignore displacement in
+ * whatever axis/axes they are centered on.
+ *
+ * @author Ches Burks
+ *
+ */
 public enum Alignment {
 	NORTH,
 	EAST,

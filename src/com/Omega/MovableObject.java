@@ -23,6 +23,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 
 public class MovableObject {
 	// direction to move
@@ -111,6 +112,15 @@ public class MovableObject {
 		// change me back
 		if (this.currentImage != null) {
 			g.drawBitmap(this.currentImage, this.x1, this.y1, null);
+		}
+	}
+
+	public void draw(Canvas g, int width, int height) {
+		// change me back
+		if (this.currentImage != null) {
+			g.drawBitmap(this.currentImage, new Rect(0, 0, (int) mWidth,
+					(int) mHeight), new Rect((int) this.x1, (int) this.y1,
+					(int) this.x1 + width, (int) this.y1 + height), null);
 		}
 	}
 

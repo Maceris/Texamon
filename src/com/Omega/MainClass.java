@@ -21,17 +21,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.util.Locale;
 
+import tiled.core.Map;
+import tiled.core.Tile;
+import tiled.core.TileLayer;
+import tiled.io.TMXMapReader;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -55,21 +60,10 @@ import com.Omega.util.DuplicateEntry;
 import com.Omega.util.IntegerTree;
 import com.Omega.util.Random;
 
-import davidiserovich.TMXLoader.TMXLoader;
-import davidiserovich.TMXLoader.TileMapData;
-
 public class MainClass extends Activity implements Runnable {
 
 	private static class MyView extends View //
 	{
-		class GreatBall extends baseItem {
-			int type = 12;// TODO remove this
-		}
-
-		class NormalBall extends baseItem {
-			int type = 8;// TODO remove this
-		}
-
 		IntegerTree idTree;
 		boolean dragging; // are we dragging some object
 		float startMouseDragX;
@@ -86,7 +80,6 @@ public class MainClass extends Activity implements Runnable {
 		GameData gameData;
 
 		int drawdelay;
-		MovableObject map;
 		MovableObject player;
 
 		MovableObject battleScreen;
@@ -135,7 +128,134 @@ public class MainClass extends Activity implements Runnable {
 		int winWidth = 0;
 		int winHeight = 0;
 
-		Bitmap mapImg;// TODO remove this
+		final int TILES_PER_SCREEN = 11;
+
+		/**
+		 * Create a bitmap based on the data in the map structure.
+		 *
+		 * @param m data structure describing the TileMap
+		 * @param c application context
+		 * @param startLayer index of the first layer to render
+		 * @param endLayer index of the last layer to render
+		 * @return bitmap of the map
+		 */
+		public static Bitmap createBitmap(Map m, Context c, int startLayer,
+				int endLayer) {
+
+			try {
+				AssetManager assetManager = c.getAssets();
+
+				// Create a bitmap of the size of the map.
+				// Straight up creating a bitmap of arbitrary size is huge in
+				// memory, but this is
+				// sufficient for small demo purposes.
+
+				// In a production engine, map size should either be restricted,
+				// or the map should be loaded to memory on the fly.
+				Bitmap mapImage =
+						Bitmap.createBitmap(m.getWidth() * m.getTileWidth(),
+								m.getHeight() * m.getTileHeight(),
+								Bitmap.Config.ARGB_8888);
+
+				// Load all tilesets that are used into memory. Again, not
+				// very efficient, but loading the image, dereferencing, and
+				// running
+				// the gc for each image is not a fast or good option.
+				// Still, a better way is forthcoming if I can think of one.
+				Bitmap[] tilesets = new Bitmap[m.getTileSets().size()];
+
+				for (int i = 0; i < tilesets.length; i++) {
+					tilesets[i] =
+							BitmapFactory.decodeStream(assetManager.open(m
+									.getTileSets().get(i).getTilebmpFile()
+									.replaceAll("^/", "")));
+				}
+
+				// Create a Canvas reference to our map Bitmap
+				// so that we can blit to it.
+
+				Canvas mapCanvas = new Canvas(mapImage);
+
+				// Loop through all layers and x and y-positions
+				// to render all the tiles.
+
+				// Later I'll add in an option for specifying which layers
+				// to display, in case some hold invisible or meta-tiles.
+
+				int currentGID;
+				Long localGID = null;
+				Rect source = new Rect(0, 0, 0, 0);
+				Rect dest = new Rect(0, 0, 0, 0);
+				Tile t;
+				Paint paint = new Paint();
+				for (int i = startLayer; i < endLayer; i++) {
+
+					for (int j = 0; j < m.getLayers().get(i).getHeight(); j++) {
+
+						for (int k = 0; k < m.getLayers().get(i).getWidth(); k++) {
+
+							t = ((TileLayer) m.getLayer(i)).getTileAt(k, j);
+							if (t == null) {// it doesnt store blank tiles.
+								continue;
+							}
+							currentGID = t.getGid();
+							// debug
+							// if (localGID == null) Log.d("GID",
+							// "Read problem");
+
+							int currentFirstGID;
+							for (int l = m.getTileSets().size() - 1; i >= 0; i--) {
+								currentFirstGID =
+										m.getTileSets().get(l).getFirstGid();
+								if (currentFirstGID <= currentGID) {
+									localGID =
+											Long.valueOf(currentGID
+													- currentFirstGID);
+									break;
+								}
+							}
+
+							// The row number is the number of tiles wide the
+							// image
+							// is divided by
+							// the tile number
+
+							// Check that this space isn't buggy or undefined,
+							// and
+							// if everything's fine, blit to the current x, y
+							// position
+							if (localGID != null) {
+								source.top = 0;
+								source.left = 0;
+								source.bottom = t.getHeight();
+								source.right = t.getWidth();
+
+								dest.top = j * m.getTileHeight();
+								dest.left = k * m.getTileWidth();
+								dest.bottom = dest.top + m.getTileHeight();
+								dest.right = dest.left + m.getTileWidth();
+
+								mapCanvas.drawBitmap(t.getImage(), source,
+										dest, paint);
+							}
+
+						}
+
+					}
+
+				}
+
+				return mapImage;
+
+			}
+			catch (IOException e) {
+				// In case the tilemap files are missing
+				e.printStackTrace(System.err);
+			}
+
+			// In case the image didn't load properly
+			return null;
+		}
 
 		public MyView(Context context, GameData newData) {
 
@@ -145,10 +265,33 @@ public class MainClass extends Activity implements Runnable {
 
 			this.rand = new Random();
 
-			// TODO remove this
+			TMXMapReader reader = new TMXMapReader();
+			Map aurageMap = null;
 
-			TileMapData mapData = TMXLoader.readTMX("aurage.tmx", context);
-			mapImg = TMXLoader.createBitmap(mapData, context, 0, 6);
+			try {
+				aurageMap =
+						reader.readMap(context.getAssets().open("aurage.tmx"),
+								context);
+			}
+			catch (Exception e) {
+				e.printStackTrace(System.err);
+				System.err.println(reader.getError());
+			}
+			if (aurageMap == null) {
+				System.err.println("Null map");
+				System.exit(-1);
+				return;// can't reach this, but gets rid of null ptr warnings
+			}
+			Bitmap mapImg = MyView.createBitmap(aurageMap, context, 0, 8);
+			if (mapImg == null) {
+				System.err.println("Null map image");
+				System.exit(-1);
+			}
+			this.gameData.setCurrentMap(aurageMap);
+			this.gameData.setCurMapImg(mapImg);
+
+			this.gameData.setxPos(aurageMap.getWidth() / 2);
+			this.gameData.setyPos(aurageMap.getHeight() / 2);
 
 			this.thisContext = context;
 			this.firstTime = true;
@@ -180,7 +323,7 @@ public class MainClass extends Activity implements Runnable {
 			});
 
 			WindowManager.registerWin(this.wStartButton,
-					WindowManager.BASE_HEIGHT);
+					WindowManager.BASE_HEIGHT, "StartButton");
 
 			this.wStart =
 					new IkWindow(new Point(0.05f, 0.05f), Alignment.NORTH_EAST,
@@ -215,11 +358,12 @@ public class MainClass extends Activity implements Runnable {
 			this.wTexamon.setVisible(false);
 
 			WindowManager.registerWin(this.wStart,
-					WindowManager.getHeight(this.wStartButton) + 1);
+					WindowManager.getHeight(this.wStartButton) + 1,
+					"StartWindow");
 			WindowManager.registerWin(this.wBag,
-					WindowManager.getHeight(this.wStart) + 1);
+					WindowManager.getHeight(this.wStart) + 1, "BagWindow");
 			WindowManager.registerWin(this.wTexamon,
-					WindowManager.BASE_HEIGHT + 1);
+					WindowManager.BASE_HEIGHT + 1, "TexamonWindow");
 
 			// create buttons
 			this.wDPad =
@@ -363,7 +507,8 @@ public class MainClass extends Activity implements Runnable {
 			this.wDPad.addChild(this.wDPadLeft);
 			this.wDPad.addChild(this.wDpadCenter);
 
-			WindowManager.registerWin(this.wDPad, WindowManager.BASE_HEIGHT);
+			WindowManager.registerWin(this.wDPad, WindowManager.BASE_HEIGHT,
+					"DPad");
 
 			this.idTree = new IntegerTree();
 
@@ -397,381 +542,8 @@ public class MainClass extends Activity implements Runnable {
 			this.gameData.setState(GameState.INGAME);
 		}
 
-		public void aurage(Canvas canvas) {
-			// TODO don't. Just... don't.
-			if (this.gameData.isMoveUp()
-					&& (!this.aurageIsBlocked((int) this.player.getX() + 3,
-							(int) this.player.getY() - 1) && !(this.player
-							.getY() <= (this.map.getY() + 48)))) {
-				this.map.setY(this.map.getY() + 1);
-
-				this.player.setCurrentFilename("player.png");
-				this.player.setImageDID(R.drawable.player);
-				if (this.isInGrass((int) this.player.getX() + 3,
-						(int) this.player.getY() + 3)) {
-					if (this.didEncounter() && !this.teamgone()) {
-						this.gameData.setState(GameState.BATTLE);
-						this.gameData.moveNone();
-					}
-				}
-				if (this.auragedoor(
-						(int) (this.player.getX() + (this.player.getWidth() / 2)),
-						(int) this.player.getY()) == 1) {
-					this.map.setCurrentFilename("temphouse.png");
-					this.map.setImageDID(R.drawable.temphouse);
-					this.map.setX(this.winWidth / 2 - 150);
-					this.map.setY(this.winHeight / 2 - 150);
-					this.map.setWidth(300);
-					this.map.setHeight(300);
-					this.insideplayer.setX(this.winWidth / 2);
-					this.insideplayer.setY(this.winHeight / 2);
-					this.exitdoor.setWidth(this.map.getWidth() / 3);
-					this.exitdoor.setHeight(this.exitdoor.getWidth() / 2);
-					this.exitdoor.setX(this.winWidth / 2 - 25);
-					this.exitdoor.setY(this.map.getY() + this.map.getHeight()
-							- this.exitdoor.getHeight());
-				}
-				if (this.auragedoor(
-						(int) (this.player.getX() + (this.player.getWidth() / 2)),
-						(int) this.player.getY()) == 2) {
-					this.map.setCurrentFilename("temphouse.png");
-					this.map.setImageDID(R.drawable.temphouse);
-					this.map.setX(this.winWidth / 2 - 150);
-					this.map.setY(this.winHeight / 2 - 150);
-					this.map.setWidth(300);
-					this.map.setHeight(300);
-					this.insideplayer.setX(this.winWidth / 2);
-					this.insideplayer.setY(this.winHeight / 2);
-					this.exitdoor.setWidth(this.map.getWidth() / 3);
-					this.exitdoor.setHeight(this.exitdoor.getWidth() / 2);
-					this.exitdoor.setX(this.winWidth / 2 - 25);
-					this.exitdoor.setY(this.map.getY() + this.map.getHeight()
-							- this.exitdoor.getHeight());
-				}
-				if (this.auragedoor(
-						(int) (this.player.getX() + (this.player.getWidth() / 2)),
-						(int) this.player.getY()) == 3) {
-					this.map.setCurrentFilename("hospitalinside.png");
-					this.map.setImageDID(R.drawable.hospitalinside);
-					this.map.setX(this.winWidth / 2 - 150);
-					this.map.setY(this.winHeight / 2 - 150);
-					this.map.setWidth(300);
-					this.map.setHeight(300);
-					this.insideplayer.setX(this.winWidth / 2);
-					this.insideplayer.setY(this.winHeight / 2);
-					this.exitdoor.setWidth(this.map.getWidth() / 3);
-					this.exitdoor.setHeight(this.exitdoor.getWidth() / 2);
-					this.exitdoor.setX(this.winWidth / 2 - 25);
-					this.exitdoor.setY(this.map.getY() + this.map.getHeight()
-							- this.exitdoor.getHeight());
-					this.healer.setX(this.map.getX()
-							+ ((5 * this.map.getWidth()) / 162));
-					this.healer.setY(this.map.getY()
-							+ ((32 * this.map.getHeight()) / 146));
-					this.healer.setWidth((this.map.getWidth() * 14) / 162);
-					this.healer.setHeight((this.map.getHeight() * 17) / 146);
-				}
-				if (this.auragedoor(
-						(int) (this.player.getX() + (this.player.getWidth() / 2)),
-						(int) this.player.getY()) == 4) {
-					this.map.setCurrentFilename("temphouse.png");
-					this.map.setImageDID(R.drawable.temphouse);
-					this.map.setX(this.winWidth / 2 - 150);
-					this.map.setY(this.winHeight / 2 - 150);
-					this.map.setWidth(300);
-					this.map.setHeight(300);
-					this.insideplayer.setX(this.winWidth / 2);
-					this.insideplayer.setY(this.winHeight / 2);
-					this.exitdoor.setWidth(this.map.getWidth() / 3);
-					this.exitdoor.setHeight(this.exitdoor.getWidth() / 2);
-					this.exitdoor.setX(this.winWidth / 2 - 25);
-					this.exitdoor.setY(this.map.getY() + this.map.getHeight()
-							- this.exitdoor.getHeight());
-				}
-				// TODO remove duplicated code
-				// TODO handle moving differently
-			}
-			if (this.gameData.isMoveDown()
-					&& (!this.aurageIsBlocked((int) this.player.getX() + 3,
-							(int) this.player.getY() + 8) && !(this.player
-							.getY() >= (this.map.getY() + this.map.getHeight() - 224)))) {
-				// if (!blocked)
-				this.map.setY(this.map.getY() - 1);
-				this.player.setCurrentFilename("playerd.png");
-				this.player.setImageDID(R.drawable.playerd);
-				if (this.isInGrass((int) this.player.getX() + 3,
-						(int) this.player.getY() + 3)) {
-					if (this.didEncounter() && !this.teamgone()) {
-						this.gameData.setState(GameState.BATTLE);
-						this.gameData.moveNone();
-					}
-				}
-
-			}
-			if (this.gameData.isMoveLeft()
-					&& (!this.aurageIsBlocked((int) this.player.getX() - 1,
-							(int) this.player.getY() + 3) && !(this.player
-							.getX() <= (this.map.getX() + 210)))) {
-				// if (!blocked)
-				this.map.setX(this.map.getX() + 1);
-
-				this.player.setCurrentFilename("playelr.png");
-				this.player.setImageDID(R.drawable.playerl);
-				if (this.isInGrass((int) this.player.getX() + 3,
-						(int) this.player.getY() + 3)) {
-					if (this.didEncounter() && !this.teamgone()) {
-						this.gameData.setState(GameState.BATTLE);
-						this.gameData.moveNone();
-					}
-				}
-
-			}
-			if (this.gameData.isMoveRight()
-					&& (!this.aurageIsBlocked((int) this.player.getX() + 8,
-							(int) this.player.getY() + 3) && !(this.player
-							.getX() >= (this.map.getX() + this.map.getWidth() - 248)))) {
-				// if (!blocked)
-				this.map.setX(this.map.getX() - 1);
-
-				this.player.setCurrentFilename("playerr.png");
-				this.player.setImageDID(R.drawable.playerr);
-				if (this.isInGrass((int) this.player.getX() + 3,
-						(int) this.player.getY() + 3)) {
-					if (this.didEncounter() && !this.teamgone()) {
-						this.gameData.setState(GameState.BATTLE);
-						this.gameData.moveNone();
-					}
-				}
-			}
-
-			// blocked = false;
-
-			this.map.draw(canvas);
-			canvas.drawBitmap(mapImg, 0, 0, null);
-			this.player.draw(canvas);
-
-			this.drawMenus(canvas);
-		}
-
-		public int auragedoor(int x, int y) {
-			int p = (int) this.map.getX();
-			int i = (int) this.map.getY();
-
-			if (x >= p + 276) {
-				if (y >= i + 50) {
-					if (x <= p + 317) {
-						if (y <= i + 71) {
-							if (!this.aurageIsBlocked(x, y)) {
-								return 1;
-							}
-						}
-					}
-				}
-			}
-			if (x >= p + 225) {
-				if (y >= i + 284) {
-					if (x <= p + 266) {
-						if (y <= i + 304) {
-							if (!this.aurageIsBlocked(x, y)) {
-								return 2;
-							}
-						}
-					}
-				}
-			}
-			if (x >= p + 333) {
-				if (y >= i + 276) {
-					if (x <= p + 374) {
-						if (y <= i + 304) {
-							if (!this.aurageIsBlocked(x, y)) {
-								return 3;
-							}
-						}
-					}
-				}
-			}
-			if (x >= p + 402) {
-				if (y >= i + 374) {
-					if (x <= p + 443) {
-						if (y <= i + 394) {
-							if (!this.aurageIsBlocked(x, y)) {
-								return 4;
-							}
-						}
-					}
-				}
-			}
-			return 0;
-
-		}
-
-		public boolean aurageIsBlocked(int x, int y) {
-			int p = (int) this.map.getX();
-			int i = (int) this.map.getY();
-			// *****************************************************************
-			// HOUSE 1
-			if (x >= p + 276) {
-				if (y >= i + 50) {
-					if (x <= p + 283) {
-						if (y <= i + 71) {
-							return true;
-						}
-					}
-				}
-			}
-			if (x >= p + 276) {
-				if (y >= i + 50) {
-					if (x <= p + 317) {
-						if (y <= i + 61) {
-							return true;
-						}
-					}
-				}
-			}
-			if (x >= p + 290) {
-				if (y >= i + 50) {
-					if (x <= p + 317) {
-						if (y <= i + 71) {
-							return true;
-						}
-					}
-				}
-			}
-			if (x >= p + 317) {
-				if (y >= i + 64) {
-					if (x <= p + 323) {
-						if (y <= i + 71) {
-							return true;
-						}
-					}
-				}
-			}
-			// *******************************************************************HOUSE
-			// 2
-			if (x >= p + 225) {
-				if (y >= i + 284) {
-					if (x <= p + 232) {
-						if (y <= i + 304) {
-							return true;
-						}
-					}
-				}
-			}
-			if (x >= p + 225) {
-				if (y >= i + 284) {
-					if (x <= p + 266) {
-						if (y <= i + 294) {
-							return true;
-						}
-					}
-				}
-			}
-			if (x >= p + 240) {
-				if (y >= i + 284) {
-					if (x <= p + 266) {
-						if (y <= i + 304) {
-							return true;
-						}
-					}
-				}
-			}
-			if (x >= p + 266) {
-				if (y >= i + 298) {
-					if (x <= p + 272) {
-						if (y <= i + 304) {
-							return true;
-						}
-					}
-				}
-			}
-			// *******************************************************************THIRD
-			// HOUSE
-			if (x >= p + 333) {
-				if (y >= i + 276) {
-					if (x <= p + 343) {
-						if (y <= i + 304) {
-							return true;
-						}
-					}
-				}
-			}
-			if (x >= p + 333) {
-				if (y >= i + 276) {
-					if (x <= p + 374) {
-						if (y <= i + 294) {
-							return true;
-						}
-					}
-				}
-			}
-			if (x >= p + 350) {
-				if (y >= i + 276) {
-					if (x <= p + 374) {
-						if (y <= i + 304) {
-							return true;
-						}
-					}
-				}
-			}
-			if (x >= p + 374) {
-				if (y >= i + 298) {
-					if (x <= p + 381) {
-						if (y <= i + 304) {
-							return true;
-						}
-					}
-				}
-			}
-			// *******************************************************************FOURTH
-			// HOUSE
-			if (x >= p + 402) {
-				if (y >= i + 374) {
-					if (x <= p + 409) {
-						if (y <= i + 394) {
-							return true;
-						}
-					}
-				}
-			}
-			if (x >= p + 402) {
-				if (y >= i + 374) {
-					if (x <= p + 443) {
-						if (y <= i + 384) {
-							return true;
-						}
-					}
-				}
-			}
-			if (x >= p + 417) {
-				if (y >= i + 374) {
-					if (x <= p + 443) {
-						if (y <= i + 394) {
-							return true;
-						}
-					}
-				}
-			}
-			if (x >= p + 443) {
-				if (y >= i + 387) {
-					if (x <= p + 449) {
-						if (y <= i + 394) {
-							return true;
-						}
-					}
-				}
-			}
-			// *******************************************************************
-			if (x >= p + 297) {
-				if (y >= i + 219) {
-					if (x <= p + 303) {
-						if (y <= i + 225) {
-							return true;
-						}
-					}
-				}
-			}
-			return false;
-		}
+		final int COUNT_MAX = 10;
+		int count = this.COUNT_MAX;// TODO remove this
 
 		public void battleScreen(Canvas canvas) {
 			// TODO completely redo everything
@@ -806,37 +578,6 @@ public class MainClass extends Activity implements Runnable {
 			return toCreate;
 		}
 
-		public boolean didBallCatch(Monster foe, baseItem theBall) {
-			boolean isGreatBall;
-			float randOne;
-			if (theBall.getType() == 12) {
-				isGreatBall = true;
-			}
-			else {
-				isGreatBall = false;
-			}
-
-			if (isGreatBall) {
-				randOne = this.rand.getIntBetween(0, 150);
-			}
-			else {
-				randOne = this.rand.getIntBetween(0, 255);
-			}
-			if (randOne <= 75) {
-				float randTwo = this.rand.getIntBetween(0, 255);
-				float f;
-				f =
-						(((foe.getMaxHP() * 255) / theBall.getType()) / (foe
-								.getCurrentHP() / 4));
-				if (f >= randTwo) {
-					return true;
-				}
-				return false;
-			}
-			return false;
-
-		}
-
 		public boolean didEncounter() {
 			int c = this.rand.getIntBetween(1, 28);
 			if (c == 16) {
@@ -844,56 +585,6 @@ public class MainClass extends Activity implements Runnable {
 			}
 			return false;
 		}
-
-		public void dragObjectToNewPosition(MovableObject obj, float startX,
-				float startY, float xPos, float yPos) {
-			float distanceX;
-			float distanceY;
-			float newX = obj.getX();
-			float newY = obj.getY();
-			boolean objMoved = false;
-
-			if (xPos < this.startMouseDragX) {
-				distanceX = this.startMouseDragX - xPos;
-				newX = obj.getX() - distanceX;
-				objMoved = true;
-			}
-			else if (xPos > this.startMouseDragX) {
-				distanceX = xPos - this.startMouseDragX;
-				newX = obj.getX() + distanceX;
-				objMoved = true;
-			}
-
-			if (yPos < this.startMouseDragY) {
-				distanceY = this.startMouseDragY - yPos;
-				newY = obj.getY() - distanceY;
-				objMoved = true;
-			}
-			else if (yPos > this.startMouseDragY) {
-				distanceY = yPos - this.startMouseDragY;
-				newY = obj.getY() + distanceY;
-				objMoved = true;
-			}
-
-			if (objMoved) {
-				if (newX < 0) {
-					newX = 0;
-				}
-				if (newX + obj.getWidth() >= this.winWidth - 1) {
-					newX = this.winWidth - obj.getWidth() - 1;
-				}
-				if (newY < 0) {
-					newY = 0;
-				}
-				if (newY + obj.getHeight() >= this.winHeight - 1) {
-					newY = this.winHeight - obj.getHeight() - 1;
-				}
-				obj.setX(newX);
-				obj.setY(newY);
-				this.startMouseDragX = xPos;
-				this.startMouseDragY = yPos;
-			} // end of if (objMoved)
-		} // end of public void dragObjectToNewPosition
 
 		private void drawMenus(Canvas canvas) {
 			this.wStart.draw(canvas);
@@ -951,267 +642,6 @@ public class MainClass extends Activity implements Runnable {
 			// draw all of your objects
 		} // end of public void gameOverScreen(Canvas canvas)
 
-		public MovableObject getTexamonMO(String name, int x, int y) {
-			String file = "p_" + name.toLowerCase(Locale.US) + ".jpg";
-			MovableObject t =
-					new MovableObject(file, R.drawable.p_c, x, y, 50, 50,
-							this.getResources());
-			if (name.equalsIgnoreCase("C")) {
-				t =
-						new MovableObject(file, R.drawable.p_c, x, y, 50, 50,
-								this.getResources());
-			}
-			else if (name.equalsIgnoreCase("Wattle")) {
-				t =
-						new MovableObject(file, R.drawable.p_wattle, x, y, 50,
-								50, this.getResources());
-			}
-			else if (name.equalsIgnoreCase("Coaldra")) {
-				t =
-						new MovableObject(file, R.drawable.p_coaldra, x, y, 50,
-								50, this.getResources());
-			}
-			else if (name.equalsIgnoreCase("Ploggy")) {
-				t =
-						new MovableObject(file, R.drawable.p_ploggy, x, y, 50,
-								50, this.getResources());
-			}
-			else if (name.equalsIgnoreCase("Bolrock")) {
-				t =
-						new MovableObject(file, R.drawable.p_bolrock, x, y, 50,
-								50, this.getResources());
-			}
-			else if (name.equalsIgnoreCase("Birderp")) {
-				t =
-						new MovableObject(file, R.drawable.p_birderp, x, y, 50,
-								50, this.getResources());
-			}
-			else if (name.equalsIgnoreCase("Aqwhirl")) {
-				t =
-						new MovableObject(file, R.drawable.p_aqwhirl, x, y, 50,
-								50, this.getResources());
-			}
-			else if (name.equalsIgnoreCase("Sunflo")) {
-				t =
-						new MovableObject(file, R.drawable.p_sunflo, x, y, 50,
-								50, this.getResources());
-			}
-			else if (name.equalsIgnoreCase("Telecat")) {
-				t =
-						new MovableObject(file, R.drawable.p_telecat, x, y, 50,
-								50, this.getResources());
-			}
-			else if (name.equalsIgnoreCase("Roxer")) {
-				t =
-						new MovableObject(file, R.drawable.p_roxer, x, y, 50,
-								50, this.getResources());
-			}
-			else if (name.equalsIgnoreCase("Magmuk")) {
-				t =
-						new MovableObject(file, R.drawable.p_magmuk, x, y, 50,
-								50, this.getResources());
-			}
-			return t;
-		}
-
-		public void insidehospital(Canvas canvas) {
-
-			if (this.gameData.isMoveUp()
-					&& (this.insideplayer.isinsde(this.map))) {
-				// if (!blocked)
-				this.insideplayer.setY(this.insideplayer.getY() - 1);
-				if (!this.insideplayer.isinsde(this.map)) {
-					this.insideplayer.setY(this.insideplayer.getY() + 1);
-				}
-				this.insideplayer.setCurrentFilename("insideplayer.png");
-				this.insideplayer.setImageDID(R.drawable.insideplayer);
-
-			}
-
-			if (this.gameData.isMoveDown()
-					&& (this.insideplayer.isinsde(this.map))) {
-				// if (!blocked)
-				this.insideplayer.setY(this.insideplayer.getY() + 1);
-				if (!this.insideplayer.isinsde(this.map)) {
-					this.insideplayer.setY(this.insideplayer.getY() - 1);
-				}
-				this.insideplayer.setCurrentFilename("insideplayerd.png");
-				this.insideplayer.setImageDID(R.drawable.insideplayerd);
-
-			}
-			if (this.gameData.isMoveLeft()
-					&& (this.insideplayer.isinsde(this.map))) {
-				// if (!blocked)
-				this.insideplayer.setX(this.insideplayer.getX() - 1);
-				if (!this.insideplayer.isinsde(this.map)) {
-					this.insideplayer.setX(this.insideplayer.getX() + 1);
-				}
-				this.insideplayer.setCurrentFilename("insideplayelr.png");
-				this.insideplayer.setImageDID(R.drawable.insideplayerl);
-
-			}
-			if (this.gameData.isMoveRight()
-					&& (this.insideplayer.isinsde(this.map))) {
-				// if (!blocked)
-				this.insideplayer.setX(this.insideplayer.getX() + 1);
-				if (!this.insideplayer.isinsde(this.map)) {
-					this.insideplayer.setX(this.insideplayer.getX() - 1);
-				}
-				this.insideplayer.setCurrentFilename("insideplayerr.png");
-				this.insideplayer.setImageDID(R.drawable.insideplayerr);
-
-			}
-
-			// blocked = false;
-			if (this.drawdelay == 2) {
-				this.drawdelay = 3;
-			}
-			if (this.drawdelay == 1) {
-				this.drawdelay = 2;
-			}
-			if (this.drawdelay == 0) {
-				this.drawdelay = 1;
-			}
-
-			if (this.map.getCurrentFilename().equalsIgnoreCase(
-					"hospitalinside.png")) {
-				this.map.setCurrentFilename("hospitalinside2.png");
-				this.map.setImageDID(R.drawable.hospitalinside2);
-				this.drawdelay = 0;
-			}
-			if (this.drawdelay == 3) {
-				this.map.setCurrentFilename("hospitalinside.png");
-				this.map.setImageDID(R.drawable.hospitalinside);
-			}
-
-			this.map.draw(canvas);
-			this.exitdoor.draw(canvas);
-			this.insideplayer.draw(canvas);
-
-			this.drawMenus(canvas);
-
-			if (this.insideplayer.intersects(this.exitdoor)) {
-				this.map.setCurrentFilename("aurage.png");
-				this.map.setImageDID(R.drawable.aurage);
-				this.map.setX(this.winWidth / 2 - 350);
-				this.map.setY(this.winHeight / 2 - 350);
-				this.map.setWidth(700);
-				this.map.setHeight(700);
-				return;
-			}
-			if (this.insideplayer.intersects(this.healer)) {
-				for (int i = 0; i <= this.gameData.getTeam().getSize() - 1; i++) {
-					this.gameData
-							.getTeam()
-							.get(i)
-							.setCurrentHP(
-									this.gameData.getTeam().get(i).getMaxHP());
-				}
-				this.myDrawText(canvas, "HEALING", 10, this.winWidth / 2,
-						this.winHeight / 2, Color.GREEN, 1);
-			}
-		}
-
-		public void insidehouse(Canvas canvas) {
-
-			if (this.gameData.isMoveUp()
-					&& (this.insideplayer.isinsde(this.map))) {
-				// if (!blocked)
-				this.insideplayer.setY(this.insideplayer.getY() - 1);
-				if (!this.insideplayer.isinsde(this.map)) {
-					this.insideplayer.setY(this.insideplayer.getY() + 1);
-				}
-				this.insideplayer.setCurrentFilename("insideplayer.png");
-				this.insideplayer.setImageDID(R.drawable.insideplayer);
-
-			}
-
-			if (this.gameData.isMoveDown()
-					&& (this.insideplayer.isinsde(this.map))) {
-				// if (!blocked)
-				this.insideplayer.setY(this.insideplayer.getY() + 1);
-				if (!this.insideplayer.isinsde(this.map)) {
-					this.insideplayer.setY(this.insideplayer.getY() - 1);
-				}
-				this.insideplayer.setCurrentFilename("insideplayerd.png");
-				this.insideplayer.setImageDID(R.drawable.insideplayerd);
-
-			}
-			if (this.gameData.isMoveLeft()
-					&& (this.insideplayer.isinsde(this.map))) {
-				// if (!blocked)
-				this.insideplayer.setX(this.insideplayer.getX() - 1);
-				if (!this.insideplayer.isinsde(this.map)) {
-					this.insideplayer.setX(this.insideplayer.getX() + 1);
-				}
-				this.insideplayer.setCurrentFilename("insideplayelr.png");
-				this.insideplayer.setImageDID(R.drawable.insideplayerl);
-
-			}
-			if (this.gameData.isMoveRight()
-					&& (this.insideplayer.isinsde(this.map))) {
-				// if (!blocked)
-				this.insideplayer.setX(this.insideplayer.getX() + 1);
-				if (!this.insideplayer.isinsde(this.map)) {
-					this.insideplayer.setX(this.insideplayer.getX() - 1);
-				}
-				this.insideplayer.setCurrentFilename("insideplayerr.png");
-				this.insideplayer.setImageDID(R.drawable.insideplayerr);
-
-			}
-
-			// blocked = false;
-
-			this.map.draw(canvas);
-			this.exitdoor.draw(canvas);
-			this.insideplayer.draw(canvas);
-
-			this.drawMenus(canvas);
-
-			if (this.insideplayer.intersects(this.exitdoor)) {
-				this.map.setCurrentFilename("aurage.png");
-				this.map.setImageDID(R.drawable.aurage);
-				this.map.setX(this.winWidth / 2 - 350);
-				this.map.setY(this.winHeight / 2 - 350);
-				this.map.setWidth(700);
-				this.map.setHeight(700);
-				return;
-			}
-		}
-
-		public boolean isInGrass(int x, int y) {
-			int p = (int) this.map.getX();
-			int i = (int) this.map.getY();
-			if (x >= p + 209) {
-				if (y >= i + 439) {
-					if (x <= p + 293) {
-						if (y <= i + 483) {
-							return true;
-						}
-					}
-				}
-			}
-			return false;
-		}
-
-		public boolean isInsideOf(float gx1, float gy1, MovableObject object) {
-			if (gx1 >= object.getX()
-					&& gx1 <= object.getX() + object.getWidth()
-					&& gy1 >= object.getY()
-					&& gy1 <= object.getY() + object.getHeight()) {
-				return true;
-			}
-			return false;
-		}
-
-		public boolean isNear(int x, int y, int x2, int y2, int radius) {
-			if ((x < x2 + radius) && (x >= x - radius) && (y <= y2 + radius)
-					&& (y >= y2 - radius)) {
-				return true;
-			}
-			return false;
-		}
-
 		public void load() {
 
 			String temp = MainClass.savedata;
@@ -1226,11 +656,6 @@ public class MainClass extends Activity implements Runnable {
 				String[] team5 = new String[21];
 				String[] team6 = new String[21];
 
-				this.map.setCurrentFilename(tempparts[0]);
-				this.map.setX(Integer.decode(tempparts[2]));
-				this.map.setY(Integer.decode(tempparts[4]));
-				this.map.setWidth(Integer.decode(tempparts[6]));
-				this.map.setHeight(Integer.decode(tempparts[8]));
 				this.insideplayer.setX(Integer.decode(tempparts[10]));
 				this.insideplayer.setY(Integer.decode(tempparts[12]));
 
@@ -1281,8 +706,8 @@ public class MainClass extends Activity implements Runnable {
 
 		}
 
-		private void myDrawText(Canvas canvas, String text, int size, float x,
-				float y, int color, int alignment) {
+		private void myDrawText(Canvas canvas, String toDraw, int size,
+				float x, float y, int color, int alignment) {
 			Paint paintText = new Paint(Paint.ANTI_ALIAS_FLAG);
 			paintText.setColor(color);
 			Typeface typeface =
@@ -1294,7 +719,7 @@ public class MainClass extends Activity implements Runnable {
 				paintText.setTextAlign(Paint.Align.CENTER);
 			}
 
-			canvas.drawText(text, x, y, paintText);
+			canvas.drawText(toDraw, x, y, paintText);
 
 		}
 
@@ -1322,10 +747,6 @@ public class MainClass extends Activity implements Runnable {
 					new MovableObject("battlegui2.png", R.drawable.battlegui2,
 							0, 0, this.winWidth, this.winHeight,
 							this.getResources());
-			this.map =
-					new MovableObject("aurage.png", R.drawable.aurage,
-							this.winWidth / 2 - 350, this.winHeight / 2 - 350,
-							700, 700, this.getResources());
 			this.player =
 					new MovableObject("player.png", R.drawable.player,
 							(this.winWidth / 2) - 3, (this.winHeight / 2) - 3,
@@ -1345,6 +766,9 @@ public class MainClass extends Activity implements Runnable {
 					new MovableObject("blank.png", R.drawable.blank, 5, 32, 14,
 							17, this.getResources());
 		}
+
+		Rect mapSource = new Rect();
+		Rect mapDest = new Rect();
 
 		// this method will get called every threadDelay (20) ms
 		@Override
@@ -1367,20 +791,83 @@ public class MainClass extends Activity implements Runnable {
 				// set the background color to green
 				canvas.drawColor(Color.GREEN);
 
-				if (this.map.getCurrentFilename()
-						.equalsIgnoreCase("aurage.png")) {
-					this.aurage(canvas);
+				if (this.gameData.isMoveUp()) {
+					if (!this.gameData.willCollide()) {
+						if (this.count <= 0) {
+							this.gameData.setyPos(this.gameData.getyPos() - 1);
+							this.count = this.COUNT_MAX;
+						}
+					}
+					this.player.setCurrentFilename("player.png");
+					this.player.setImageDID(R.drawable.player);
+
+					// TODO handle moving differently
 				}
-				if (this.map.getCurrentFilename().equalsIgnoreCase(
-						"temphouse.png")) {
-					this.insidehouse(canvas);
+				if (this.gameData.isMoveDown()) {
+					if (!this.gameData.willCollide()) {
+						if (this.count <= 0) {
+							this.gameData.setyPos(this.gameData.getyPos() + 1);
+							this.count = this.COUNT_MAX;
+						}
+					}
+
+					this.player.setCurrentFilename("playerd.png");
+					this.player.setImageDID(R.drawable.playerd);
+
 				}
-				if (this.map.getCurrentFilename().equalsIgnoreCase(
-						"hospitalinside.png")
-						|| this.map.getCurrentFilename().equalsIgnoreCase(
-								"hospitalinside2.png")) {
-					this.insidehospital(canvas);
+				if (this.gameData.isMoveLeft()) {
+					if (!this.gameData.willCollide()) {
+						if (this.count <= 0) {
+							this.gameData.setxPos(this.gameData.getxPos() - 1);
+							this.count = this.COUNT_MAX;
+						}
+					}
+
+					this.player.setCurrentFilename("playerl.png");
+					this.player.setImageDID(R.drawable.playerl);
+
 				}
+				if (this.gameData.isMoveRight()) {
+					if (!this.gameData.willCollide()) {
+						if (this.count <= 0) {
+							this.gameData.setxPos(this.gameData.getxPos() + 1);
+							this.count = this.COUNT_MAX;
+						}
+					}
+					this.player.setCurrentFilename("playerr.png");
+					this.player.setImageDID(R.drawable.playerr);
+				}
+
+				if (this.gameData.isInGrass()) {
+					if (this.didEncounter() && !this.teamgone()) {
+						this.gameData.setState(GameState.BATTLE);
+						this.gameData.moveNone();
+					}
+				}
+				if (this.count > 0) {
+					--this.count;
+				}
+
+				this.mapSource
+						.set((this.gameData.getxPos() - (this.TILES_PER_SCREEN / 2))
+								* this.gameData.getCurrentMap().getTileWidth(),
+								(this.gameData.getyPos() - (this.TILES_PER_SCREEN / 2))
+										* this.gameData.getCurrentMap()
+												.getTileHeight(),
+								(this.gameData.getxPos() + (this.TILES_PER_SCREEN / 2))
+										* this.gameData.getCurrentMap()
+												.getTileWidth(),
+								(this.gameData.getyPos() + (this.TILES_PER_SCREEN / 2))
+										* this.gameData.getCurrentMap()
+												.getTileHeight());
+				this.mapDest.set(0, 0, canvas.getWidth(), canvas.getHeight());
+				canvas.drawBitmap(this.gameData.getCurMapImg(), this.mapSource,
+						this.mapDest, null);
+
+				this.player.draw(canvas, canvas.getWidth() / TILES_PER_SCREEN,
+						canvas.getHeight() / TILES_PER_SCREEN);
+
+				this.drawMenus(canvas);
 
 				if (this.gameData.getState() == GameState.BATTLE) {
 					this.battleScreen(canvas);
@@ -1642,32 +1129,6 @@ public class MainClass extends Activity implements Runnable {
 				}
 			}
 			return true;
-		}
-
-		public String[] texamontostring(Monster thetexamon) {
-			String[] info = new String[21];
-			info[0] = "" + thetexamon.getCurrentHP();
-			info[1] = ",";
-			info[2] = "" + thetexamon.getCurrentLVL();
-			info[3] = ",";
-			info[4] = thetexamon.getLocation();
-			info[5] = ",";
-			info[6] = thetexamon.getMove(0).getName();
-			info[7] = ",";
-			info[8] = thetexamon.getMove(1).getName();
-			info[9] = ",";
-			info[10] = thetexamon.getMove(2).getName();
-			info[11] = ",";
-			info[12] = thetexamon.getMove(3).getName();
-			info[13] = ",";
-			info[14] = thetexamon.getNickName();
-			info[15] = ",";
-			info[16] = "" + thetexamon.getUID();
-			info[17] = ",";
-			info[18] = "" + thetexamon.getXP();
-			info[19] = ",";
-			info[20] = thetexamon.getTexamon().getName();
-			return info;
 		}
 	}
 

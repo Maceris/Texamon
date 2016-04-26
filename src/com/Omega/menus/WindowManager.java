@@ -18,6 +18,7 @@ package com.Omega.menus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import android.graphics.Canvas;
 import android.util.SparseArray;
@@ -25,7 +26,7 @@ import android.util.SparseArray;
 /**
  * Handles window depths and allows for drawing of registered windows. All
  * methods should be thread-safe.
- * 
+ *
  * @author Ches Burks
  *
  */
@@ -38,6 +39,8 @@ public class WindowManager {
 			new SparseArray<ArrayList<IkWindow>>();
 	private static HashMap<IkWindow, Integer> heightMap =
 			new HashMap<IkWindow, Integer>();
+	private static HashMap<String, IkWindow> nameMap =
+			new HashMap<String, IkWindow>();
 
 	/**
 	 * The default/base height for windows.
@@ -51,7 +54,7 @@ public class WindowManager {
 
 	/**
 	 * Draw all windows on the given canvas in order.
-	 * 
+	 *
 	 * @param canvas The canvas to draw on
 	 */
 	public static void drawWindows(Canvas canvas) {
@@ -81,12 +84,50 @@ public class WindowManager {
 	}
 
 	/**
-	 * Registers a window with a given height
+	 * Registers a window with a given height. <b>Note:</b> Windows should have
+	 * a name associated with them, as otherwise they will be basically
+	 * anonymous, and cannot be searched for by name.
 	 * 
 	 * @param window The window to register
 	 * @param height the windows height
 	 */
 	public static void registerWin(final IkWindow window, final int height) {
+		synchronized (WindowManager.heightMap) {
+			if (WindowManager.heightMap.containsKey(window)) {
+				// The window already exists somewhere
+				// TODO decide what to do here
+			}
+			else {
+				// The window is not registered yet
+				WindowManager.heightMap.put(window, height);
+				ArrayList<IkWindow> heightEntry = null;
+				synchronized (WindowManager.windowTable) {
+					heightEntry = WindowManager.windowTable.get(height);
+					if (heightEntry == null) {
+						// that height doesn't exist, so create one
+						heightEntry = new ArrayList<IkWindow>();
+						WindowManager.windowTable.put(height, heightEntry);
+					}
+					// now there is an entry
+					synchronized (heightEntry) {
+						// add the window to the window table
+						heightEntry.add(window);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Registers a window with a given height and name. The name should be
+	 * unique to the window.
+	 *
+	 * @param window The window to register
+	 * @param height the windows height
+	 * @param name The name of the window
+	 */
+	public static void registerWin(final IkWindow window, final int height,
+			final String name) {
 		boolean containsKey = false;
 		synchronized (WindowManager.heightMap) {
 			containsKey = WindowManager.heightMap.containsKey(window);
@@ -96,26 +137,14 @@ public class WindowManager {
 			// TODO decide what to do here
 		}
 		else {
-			// The window is not registered yet
-			synchronized (WindowManager.heightMap) {
-				WindowManager.heightMap.put(window, height);
-			}
-			ArrayList<IkWindow> heightEntry = null;
-			synchronized (WindowManager.windowTable) {
-				heightEntry = WindowManager.windowTable.get(height);
-			}
-			if (heightEntry == null) {
-				// that height doesn't exist, so create one
-				synchronized (WindowManager.windowTable) {
-					heightEntry = new ArrayList<IkWindow>();
-					WindowManager.windowTable.put(height, heightEntry);
+			WindowManager.registerWin(window, height);
+			synchronized (WindowManager.nameMap) {
+				if (WindowManager.nameMap.containsKey(name)) {
+					// that name is already registered
+					// TODO decide what to do here
 				}
-			}
-			// now there is an entry
-			synchronized (WindowManager.windowTable) {
-				synchronized (heightEntry) {
-					// add the window to the window table
-					heightEntry.add(window);
+				else {
+					WindowManager.nameMap.put(name, window);
 				}
 			}
 		}
@@ -179,13 +208,43 @@ public class WindowManager {
 				heightEntry.add(window);
 			}
 		}
+	}
 
+	/**
+	 * Sets the name of the window if it currently exists
+	 *
+	 * @param window the window to modify
+	 * @param name the new name to use
+	 */
+	public static void setName(final IkWindow window, final String name) {
+		boolean containsKey = false;
+		synchronized (WindowManager.heightMap) {
+			containsKey = WindowManager.heightMap.containsKey(window);
+		}
+		if (!containsKey) {
+			return;
+		}
+		String oldName = null;
+		synchronized (WindowManager.nameMap) {
+			for (Entry<String, IkWindow> entry : WindowManager.nameMap
+					.entrySet()) {
+				if (entry.getValue() == window) {
+					// only should be assigned once
+					oldName = entry.getKey();
+					break;
+				}
+			}
+			if (oldName != null) {
+				WindowManager.nameMap.remove(oldName);
+			}
+			WindowManager.nameMap.put(name, window);
+		}
 	}
 
 	/**
 	 * Returns the height of the given window, or {@link #ERROR_HEIGHT} if that
 	 * window is not registered.
-	 * 
+	 *
 	 * @param window the window to check for
 	 * @return the height of the window or {@link #ERROR_HEIGHT}
 	 */
@@ -195,12 +254,25 @@ public class WindowManager {
 				return WindowManager.heightMap.get(window);
 			}
 		}
-		return ERROR_HEIGHT;
+		return WindowManager.ERROR_HEIGHT;
+	}
+
+	/**
+	 * Returns the window mapped to the given name. If none exists, it returns
+	 * null.
+	 *
+	 * @param name The name to look for
+	 * @return the window that has the given name
+	 */
+	public static IkWindow getByName(final String name) {
+		synchronized (WindowManager.nameMap) {
+			return WindowManager.nameMap.get(name);
+		}
 	}
 
 	/**
 	 * Unregisters the given window
-	 * 
+	 *
 	 * @param window the window to unregister
 	 */
 	public static void unregisterWin(final IkWindow window) {
@@ -237,6 +309,10 @@ public class WindowManager {
 		// remove the window from the height map
 		synchronized (WindowManager.heightMap) {
 			WindowManager.heightMap.remove(window);
+		}
+		// remove the window from the name map
+		synchronized (WindowManager.nameMap) {
+			WindowManager.nameMap.values().remove(window);
 		}
 	}
 }

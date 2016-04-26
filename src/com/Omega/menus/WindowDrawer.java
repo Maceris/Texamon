@@ -16,6 +16,7 @@
  *******************************************************************************/
 package com.Omega.menus;
 
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
@@ -35,6 +36,10 @@ import android.graphics.RectF;
 public class WindowDrawer {
 	/**
 	 * Defines the different borders a window can have.
+	 * <ul>
+	 * <li><b>LINE</b> - A simple line</li>
+	 * <li><b>BORDERLESS</b> - No border, just the background</li>
+	 * </ul>
 	 */
 	public enum Border {
 		/**
@@ -48,7 +53,16 @@ public class WindowDrawer {
 	}
 
 	/**
-	 * The colors of a window and its border.
+	 * The colors of a window and its border. Borders are a darker shade of the
+	 * color.
+	 * <ul>
+	 * <li><b>LIGHT</b> (white)</li>
+	 * <li><b>RED</b></li>
+	 * <li><b>BLUE</b></li>
+	 * <li><b>GREEN</b></li>
+	 * <li><b>DARK</b> (dark grey)</li>
+	 * <li><b>YELLOW</b></li>
+	 * </ul>
 	 *
 	 */
 	public enum ColorScheme {
@@ -80,15 +94,20 @@ public class WindowDrawer {
 
 	/**
 	 * Defines the different styles of the box.
+	 * <ul>
+	 * <li><b>SQUARE</b> - A regular box</li>
+	 * <li><b>ROUNDED</b> - A rounded rectangle</li>
+	 * <li><b>EMPTY_SQUARE</b> - Square, but no fill. Border may still appear</li>
+	 * <li><b>EMPTY_ROUNDED</b> - Rounded, but no fill. Border may still appear</li>
+	 * </ul>
 	 */
 	public enum WinStyle {
 		/**
-		 * A square box with no border
+		 * A square box
 		 */
 		SQUARE,
 		/**
-		 * A rectangle but with rounded corners. These do not have corner
-		 * pieces.
+		 * A rectangle but with rounded corners
 		 */
 		ROUNDED,
 		/**
@@ -251,10 +270,118 @@ public class WindowDrawer {
 		}
 	}
 
+	public static void drawWindow(Canvas c, IkWindow win, WinStyle style,
+			Border border, ColorScheme colorScheme, Bitmap texture) {
+		if (c == null || win == null || style == null || border == null
+				|| colorScheme == null || texture == null) {
+			// TODO log error
+			return;
+		}
+
+		Rect boundingRect = win.getBoundingRect(c);
+		RectF boundingFRect = new RectF(boundingRect);
+		/*
+		 * 0.04 is roughly the corner radius percentage that credit cards use
+		 */
+		float cornerMult = 0.04f;
+		WindowDrawer.paint.reset();
+
+		// sets the color to the background color
+		WindowDrawer.setColor(WindowDrawer.paint, colorScheme);
+
+		WindowDrawer.paint.setColorFilter(WindowDrawer.COLOR_FILTER_NORMAL);
+		// draw background
+		switch (style) {
+		case ROUNDED:
+			c.drawBitmap(texture, null, boundingFRect, WindowDrawer.paint);
+			break;
+		case SQUARE:
+			c.drawBitmap(texture, null, boundingFRect, WindowDrawer.paint);
+			break;
+		case EMPTY_ROUNDED:
+			break;
+		case EMPTY_SQUARE:
+			break;
+		default:
+			c.drawRect(boundingRect, WindowDrawer.paint);
+			break;
+
+		}
+		// set the color to border color
+		WindowDrawer.paint.setColorFilter(WindowDrawer.COLOR_FILTER_DARKEN);
+		WindowDrawer.paint.setStyle(android.graphics.Paint.Style.STROKE);
+
+		// the width or height of the rec, whichever is larger
+		float recLargerSize =
+				(boundingFRect.width() > boundingFRect.height()) ? boundingFRect
+						.width() : boundingFRect.height();
+		// draw the border
+		switch (border) {
+		case BORDERLESS:
+			// Nothing needs to be done here
+			break;
+		case LINE:
+			WindowDrawer.paint.setStrokeWidth(recLargerSize * 0.01f);
+			switch (style) {
+			case ROUNDED:
+			case EMPTY_ROUNDED:
+				WindowDrawer.paint.setStrokeCap(Cap.ROUND);
+				WindowDrawer.paint.setStrokeJoin(Join.ROUND);
+				c.drawRoundRect(boundingFRect,
+						cornerMult * boundingFRect.width(), cornerMult
+								* boundingFRect.height(), WindowDrawer.paint);
+				break;
+			case SQUARE:
+			case EMPTY_SQUARE:
+				WindowDrawer.paint.setStrokeCap(Cap.SQUARE);
+				WindowDrawer.paint.setStrokeJoin(Join.BEVEL);
+				c.drawRect(boundingRect, WindowDrawer.paint);
+				break;
+			default:
+				WindowDrawer.paint.setStrokeCap(Cap.SQUARE);
+				WindowDrawer.paint.setStrokeJoin(Join.BEVEL);
+				c.drawRect(boundingRect, WindowDrawer.paint);
+				break;
+			}
+			break;
+		default:
+			WindowDrawer.paint.setStrokeWidth(recLargerSize * 0.01f);
+			switch (style) {
+			case ROUNDED:
+			case EMPTY_ROUNDED:
+				WindowDrawer.paint.setStrokeCap(Cap.ROUND);
+				WindowDrawer.paint.setStrokeJoin(Join.ROUND);
+				c.drawRoundRect(boundingFRect,
+						cornerMult * boundingFRect.width(), cornerMult
+								* boundingFRect.height(), WindowDrawer.paint);
+				break;
+			case SQUARE:
+			case EMPTY_SQUARE:
+				WindowDrawer.paint.setStrokeCap(Cap.SQUARE);
+				WindowDrawer.paint.setStrokeJoin(Join.BEVEL);
+				c.drawRect(boundingRect, WindowDrawer.paint);
+				break;
+			default:
+				WindowDrawer.paint.setStrokeCap(Cap.SQUARE);
+				WindowDrawer.paint.setStrokeJoin(Join.BEVEL);
+				c.drawRect(boundingRect, WindowDrawer.paint);
+				break;
+			}
+			break;
+		}
+	}
+
+	/**
+	 * Sets the color of the given paint to RGB values representative of the
+	 * given color scheme.
+	 *
+	 * @param p the paint to set the color on
+	 * @param c the color scheme to base RGB values off of
+	 */
 	private static void setColor(Paint p, final ColorScheme c) {
 		/*
 		 * These use the Natural Color System colors where possible because it
-		 * looks nicer than strictly FF0000 type colors.
+		 * looks nicer than strictly FF0000, 00FF00, etc. type colors.
 		 */
 		switch (c) {
 		case BLUE:

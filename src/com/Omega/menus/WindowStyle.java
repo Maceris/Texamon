@@ -22,18 +22,39 @@ import com.Omega.menus.WindowDrawer.WinStyle;
 
 /**
  * Contains information needed to draw a window. These are just publicly
- * accessable variables and therefore is inherently thread-unsafe.
+ * accessible variables and therefore is inherently thread-unsafe.
  *
  * @author Ches Burks
  *
  */
 public class WindowStyle {
+	/**
+	 * The default style for windows to use. When not specified, this is the one
+	 * that will be used.
+	 */
 	public static final WinStyle defStyle = WinStyle.SQUARE;
+	/**
+	 * The default border for windows. When not specified, this is the one that
+	 * will be used.
+	 */
 	public static final Border defBorder = Border.LINE;
+	/**
+	 * The default color scheme that windows have. When not specified, this is
+	 * the one that will be used.
+	 */
 	public static final ColorScheme defColorScheme = ColorScheme.LIGHT;
 
+	/**
+	 * The {@link WindowStyle style} of the window.
+	 */
 	public WinStyle style;
+	/**
+	 * The {@link Border border} of the window
+	 */
 	public Border border;
+	/**
+	 * The {@link ColorScheme color scheme} of the window
+	 */
 	public ColorScheme colorScheme;
 
 	/**

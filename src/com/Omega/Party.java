@@ -43,20 +43,20 @@ public class Party implements Saveable {
 	}
 
 	public int getSize() {
-		synchronized (members) {
+		synchronized (this.members) {
 			return this.members.size();
 		}
 	}
 
 	public boolean isFull() {
-		synchronized (members) {
+		synchronized (this.members) {
 			return this.members.size() == Party.MAX_MEMBERS;
 		}
 	}
 
 	/**
 	 * Returns the monster at the given index, or null if it is an invalid index
-	 * 
+	 *
 	 * @param index the index of the monster to get
 	 * @return the monster at that slot, or null if none exists
 	 */
@@ -64,19 +64,19 @@ public class Party implements Saveable {
 		if (index < 0) {
 			return null;
 		}
-		synchronized (members) {
+		synchronized (this.members) {
 			if (index > this.members.size()) {
 				return null;
 			}
-			return members.get(index);
+			return this.members.get(index);
 		}
 	}
 
 	public void set(final int index, final Monster member) {
-		if (index < 0 || index > MAX_MEMBERS) {
+		if (index < 0 || index > Party.MAX_MEMBERS) {
 			return;
 		}
-		synchronized (members) {
+		synchronized (this.members) {
 			this.members.set(index, member);
 		}
 	}
@@ -84,15 +84,15 @@ public class Party implements Saveable {
 	/**
 	 * Adds the given monster to the team. Returns true if the monster was
 	 * added, or false if the team was full or there was some error.
-	 * 
+	 *
 	 * @param toAdd the monster to add
 	 * @return true if successful, or false otherwise
 	 */
 	public boolean add(Monster toAdd) {
-		if (isFull()) {
+		if (this.isFull()) {
 			return false;
 		}
-		synchronized (members) {
+		synchronized (this.members) {
 			try {
 				this.members.add(toAdd);
 			}
@@ -106,19 +106,19 @@ public class Party implements Saveable {
 	@Override
 	public String toString() {
 		String out = "";
-		synchronized (members) {
+		synchronized (this.members) {
 			out += this.members.size();
 		}
 
 		final int size;
-		synchronized (members) {
+		synchronized (this.members) {
 			size = this.members.size();
 		}
 		Monster member;
 		for (int i = 0; i < size; ++i) {
 			out += Saveable.DELIMITER;
 			out += Saveable.NEST_BEGIN;
-			synchronized (members) {
+			synchronized (this.members) {
 				member = this.members.get(i);
 			}
 			out += member.toString();

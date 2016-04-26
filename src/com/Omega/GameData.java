@@ -17,8 +17,11 @@
 package com.Omega;
 
 import java.util.ArrayList;
+
+import tiled.core.Map;
+import tiled.core.TileLayer;
 import android.annotation.SuppressLint;
-import com.Omega.world.Map;
+import android.graphics.Bitmap;
 
 /**
  * Information about the current game
@@ -28,7 +31,7 @@ import com.Omega.world.Map;
  */
 @SuppressLint("RtlHardcoded")
 public class GameData {
-	private enum Direction {
+	enum Direction {
 		NONE,
 		UP,
 		RIGHT,
@@ -43,8 +46,9 @@ public class GameData {
 	private int yPos;
 	private Map currentMap;
 	private Party team;
+	private Bitmap curMapImg;
 
-	private Direction movement;
+	public Direction movement;//TODO make private again
 
 	public GameData() {
 		this.playerName = "Name";
@@ -55,6 +59,15 @@ public class GameData {
 		this.currentMap = new Map(0, 0);
 		this.team = new Party();
 		this.movement = Direction.NONE;
+	}
+
+	/**
+	 * Returns the current maps bitmap representation.
+	 *
+	 * @return the bitmap representing the current map
+	 */
+	public synchronized Bitmap getCurMapImg() {
+		return this.curMapImg;
 	}
 
 	/**
@@ -127,6 +140,27 @@ public class GameData {
 	 */
 	public synchronized int getyPos() {
 		return this.yPos;
+	}
+
+	/**
+	 * Returns true if the player is inside a tile with plants on it
+	 *
+	 * @return true if the player is in plants, false otherwise
+	 */
+	public synchronized boolean isInGrass() {
+		int newx = this.xPos;
+		int newy = this.yPos;
+		
+		if (this.currentMap.getLayerCount() >= 7) {
+			if (((TileLayer) this.currentMap.getLayer(2)).getTileAt(newx, newy) != null) {
+				// plants
+				return true;
+			}
+		}
+		else {
+			System.err.println("Map does not have 7+ layers");
+		}
+		return false;
 	}
 
 	/**
@@ -236,6 +270,16 @@ public class GameData {
 	}
 
 	/**
+	 * Sets the current map image to the supplied one. This should be done
+	 * whenever the map is changed.
+	 *
+	 * @param newMapImg the new bitmap to display
+	 */
+	public synchronized void setCurMapImg(Bitmap newMapImg) {
+		this.curMapImg = newMapImg;
+	}
+
+	/**
 	 * Sets the current map
 	 *
 	 * @param newMap the current map to set
@@ -296,6 +340,50 @@ public class GameData {
 	 */
 	public synchronized void setyPos(int y) {
 		this.yPos = y;
+	}
+
+	/**
+	 * Returns true if the player will run into a solid object if they move in
+	 * their current direction.
+	 *
+	 * @return true if the next movement would be into a solid object, false
+	 *         otherwise
+	 */
+	public synchronized boolean willCollide() {
+		int newx = this.xPos;
+		int newy = this.yPos;
+		switch (this.movement) {
+		case DOWN:
+			++newy;
+			break;
+		case LEFT:
+			--newx;
+			break;
+		case NONE:
+			return false;
+		case RIGHT:
+			++newx;
+			break;
+		case UP:
+			--newy;
+			break;
+		default:
+			return false;
+		}
+		if (this.currentMap.getLayerCount() >= 8) {
+			if (((TileLayer) this.currentMap.getLayer(1)).getTileAt(newx, newy) != null) {
+				// buildings
+				return true;
+			}
+			if (((TileLayer) this.currentMap.getLayer(6)).getTileAt(newx, newy) != null) {
+				// fences
+				return true;
+			}
+		}
+		else {
+			System.err.println("Map does not have 8+ layers");
+		}
+		return false;
 	}
 
 }

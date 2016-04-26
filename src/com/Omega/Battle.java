@@ -18,10 +18,29 @@ package com.Omega;
 
 import com.Omega.util.Random;
 
+/**
+ * State information and helper methods for a battle that is taking place.
+ * 
+ * @author Ches Burks
+ *
+ */
 public class Battle {
+	/**
+	 * The RNG for battles
+	 */
 	private static Random rand = new Random();
 
-	public static int calcDamage(Monster attacker, Monster defender, Move move) {
+	/**
+	 * Calculates the damage done to an opponent based on stats of both parties,
+	 * move information, type advantages, etc.
+	 * 
+	 * @param attacker the monster using the move
+	 * @param defender the monster the move is used on
+	 * @param move the move that is used
+	 * @return how much damage should be done to the defender
+	 */
+	public static int calcDamage(final Monster attacker,
+			final Monster defender, final Move move) {
 		float lvl = attacker.getCurrentLVL();
 		float basepower = move.getPower();
 		float atk = attacker.getTexamon().getATK();
@@ -47,107 +66,125 @@ public class Battle {
 		return damagedone;
 	}
 
-	public static double getTypeDamage(Type type1, Type type2) {
-		double dam = 1;
-		if (type1.equals(Type.WATER)) {
-			if (type2.equals(Type.WATER)) {
-				dam = .5;
-			}
-			else if (type2.equals(Type.FIRE)) {
-				dam = 2;
-			}
-			else if (type2.equals(Type.PLANT)) {
-				dam = .5;
-			}
-			else if (type2.equals(Type.STONE)) {
-				dam = 2;
-			}
-			else if (type2.equals(Type.GLITCH)) {
-				dam = .5;
-			}
-		}
-		else if (type1.equals(Type.FIRE)) {
-			if (type2.equals(Type.WATER)) {
-				dam = .5;
-			}
-			else if (type2.equals(Type.FIRE)) {
-				dam = .5;
-			}
-			else if (type2.equals(Type.PLANT)) {
-				dam = 2;
-			}
-			else if (type2.equals(Type.STONE)) {
-				dam = .5;
-			}
-			else if (type2.equals(Type.GLITCH)) {
-				dam = .5;
-			}
-		}
-		else if (type1.equals(Type.PLANT)) {
-			if (type2.equals(Type.WATER)) {
-				dam = 2;
-			}
-			else if (type2.equals(Type.FIRE)) {
-				dam = .5;
-			}
-			else if (type2.equals(Type.PLANT)) {
-				dam = .5;
-			}
-			else if (type2.equals(Type.STONE)) {
-				dam = 2;
-			}
-			else if (type2.equals(Type.GLITCH)) {
-				dam = .5;
-			}
-		}
-		else if (type1.equals(Type.STONE)) {
-			if (type2.equals(Type.WATER)) {
-				dam = .5;
-			}
-			else if (type2.equals(Type.FIRE)) {
-				dam = 2;
-			}
-			else if (type2.equals(Type.PLANT)) {
-				dam = .5;
-			}
-			else if (type2.equals(Type.STONE)) {
-				dam = .5;
-			}
-			else if (type2.equals(Type.GLITCH)) {
-				dam = .5;
-			}
-		}
-		else if (type1.equals(Type.NORMAL)) {
-			if (type2.equals(Type.STONE)) {
-				dam = .5;
-			}
-			else if (type2.equals(Type.NORMAL)) {
-				dam = .5;
-			}
-			else if (type2.equals(Type.GLITCH)) {
-				dam = .5;
-			}
-		}
-		else if (type1.equals(Type.GLITCH)) {
-			if (type2.equals(Type.WATER)) {
-				dam = 2;
-			}
-			else if (type2.equals(Type.FIRE)) {
-				dam = 2;
-			}
-			else if (type2.equals(Type.PLANT)) {
-				dam = 2;
-			}
-			else if (type2.equals(Type.STONE)) {
-				dam = 2;
-			}
-			else if (type2.equals(Type.NORMAL)) {
-				dam = 2;
-			}
-			else if (type2.equals(Type.GLITCH)) {
-				dam = 0;
-			}
+	public static boolean didBallCatch(final Monster foe,
+			final boolean isGreatBall) {
+		float randOne;
+		// great ball is 12
+		// normal is 8
 
+		if (isGreatBall) {
+			randOne = Battle.rand.getIntBetween(0, 150);
+		}
+		else {
+			randOne = Battle.rand.getIntBetween(0, 255);
+		}
+		if (randOne <= 75) {
+			float randTwo = Battle.rand.getIntBetween(0, 255);
+			float f;
+			f =
+					(((foe.getMaxHP() * 255) / (isGreatBall ? 12 : 8)) / (foe
+							.getCurrentHP() / 4));
+			if (f >= randTwo) {
+				return true;
+			}
+			return false;
+		}
+		return false;
+
+	}
+
+	/**
+	 * Returns the effectiveness of the attacking type against the defending as
+	 * a damage multiplier (1, .5, or 2) applied to damage done from the
+	 * attacking type to the defending one.
+	 * 
+	 * @param attacking the attacking type
+	 * @param defending the defending type
+	 * @return the damage multiplier
+	 */
+	public static double getTypeDamage(final Type attacking,
+			final Type defending) {
+		double dam = 1;
+		if (attacking.equals(Type.WATER)) {
+			if (defending.equals(Type.FIRE)) {
+				dam = 2;
+			}
+			else if (defending.equals(Type.PLANT)) {
+				dam = .5;
+			}
+			else if (defending.equals(Type.STONE)) {
+				dam = 2;
+			}
+			else if (defending.equals(Type.GLITCH)) {
+				dam = .5;
+			}
+		}
+		else if (attacking.equals(Type.FIRE)) {
+			if (defending.equals(Type.WATER)) {
+				dam = .5;
+			}
+			else if (defending.equals(Type.PLANT)) {
+				dam = 2;
+			}
+			else if (defending.equals(Type.STONE)) {
+				dam = .5;
+			}
+			else if (defending.equals(Type.GLITCH)) {
+				dam = .5;
+			}
+		}
+		else if (attacking.equals(Type.PLANT)) {
+			if (defending.equals(Type.WATER)) {
+				dam = 2;
+			}
+			else if (defending.equals(Type.FIRE)) {
+				dam = .5;
+			}
+			else if (defending.equals(Type.STONE)) {
+				dam = 2;
+			}
+			else if (defending.equals(Type.GLITCH)) {
+				dam = .5;
+			}
+		}
+		else if (attacking.equals(Type.STONE)) {
+			if (defending.equals(Type.WATER)) {
+				dam = .5;
+			}
+			else if (defending.equals(Type.FIRE)) {
+				dam = 2;
+			}
+			else if (defending.equals(Type.PLANT)) {
+				dam = .5;
+			}
+			else if (defending.equals(Type.GLITCH)) {
+				dam = .5;
+			}
+		}
+		else if (attacking.equals(Type.NORMAL)) {
+			if (defending.equals(Type.STONE)) {
+				dam = .5;
+			}
+			else if (defending.equals(Type.GLITCH)) {
+				dam = .5;
+			}
+		}
+		else if (attacking.equals(Type.GLITCH)) {
+			if (defending.equals(Type.WATER)) {
+				dam = 2;
+			}
+			else if (defending.equals(Type.FIRE)) {
+				dam = 2;
+			}
+			else if (defending.equals(Type.PLANT)) {
+				dam = 2;
+			}
+			else if (defending.equals(Type.STONE)) {
+				dam = 2;
+			}
+			else if (defending.equals(Type.NORMAL)) {
+				dam = 2;
+			}
 		}
 		return dam;
 	}

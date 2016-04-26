@@ -31,6 +31,9 @@ import com.Omega.Point;
 
 public class IkWindow {
 
+	/**
+	 * The style to use if a window does not have a style specifically set.
+	 */
 	private static WindowStyle defaultStyle = new WindowStyle(
 			WindowStyle.defStyle, WindowStyle.defBorder,
 			WindowStyle.defColorScheme);
@@ -88,6 +91,10 @@ public class IkWindow {
 		}
 	}
 
+	/**
+	 * The style to use in drawing the window. If it is null, the default style
+	 * is used. If not null, it overrides the default.
+	 */
 	private WindowStyle currentStyle;
 
 	/**
@@ -148,10 +155,20 @@ public class IkWindow {
 	 * Whether or not it should be drawn on the screen
 	 */
 	protected boolean visible;
+
+	/**
+	 * The paint to use for drawing the body of this window
+	 */
 	private Paint mainPaint;
 
+	/**
+	 * The paint to use for drawing the border of this window
+	 */
 	private Paint borderPaint;
 
+	/**
+	 * A list of sub-windows this window contains
+	 */
 	private ArrayList<IkWindow> children;
 
 	/**
@@ -219,6 +236,15 @@ public class IkWindow {
 		this.dirty();
 	}
 
+	/**
+	 * Returns true if this window contains the given point, given a certain
+	 * screen width and height.
+	 *
+	 * @param scrWidth the width of the screen/canvas the window is in
+	 * @param scrHeight the height of the screen/canvas the window is in
+	 * @param p the point to check for
+	 * @return true if the window contains the point, otherwise false
+	 */
 	public synchronized boolean containsPoint(int scrWidth, int scrHeight,
 			Point p) {
 		RectF actualRect =
@@ -255,7 +281,7 @@ public class IkWindow {
 		if (!this.visible) {
 			return;
 		}
-		WindowDrawer.drawWindow(c, this, getStyle());
+		WindowDrawer.drawWindow(c, this, this.getStyle());
 		for (IkWindow item : this.children) {
 			item.draw(c);
 		}

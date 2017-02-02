@@ -20,10 +20,22 @@ import java.util.ArrayList;
 
 import com.Omega.util.SaveUtil;
 
+/**
+ * A group of monsters with a set size.
+ * 
+ * @author Ches Burks
+ *
+ */
 public class Party implements Saveable {
+	/**
+	 * The maximum number of members that a party may contain ( {@value} )
+	 */
 	public static final int MAX_MEMBERS = 6;
 	private ArrayList<Monster> members;
 
+	/**
+	 * Constructs a new empty party
+	 */
 	public Party() {
 		this.members = new ArrayList<Monster>();
 	}
@@ -42,12 +54,25 @@ public class Party implements Saveable {
 		}
 	}
 
+	/**
+	 * Returns the number of members currently in the party.
+	 * 
+	 * @return the size of the members list
+	 */
 	public int getSize() {
 		synchronized (this.members) {
 			return this.members.size();
 		}
 	}
 
+	/**
+	 * Returns true if the number of members is the maximum number that a team
+	 * may hold.
+	 * 
+	 * @see #MAX_MEMBERS
+	 * 
+	 * @return true if the party is of max size, false otherwise
+	 */
 	public boolean isFull() {
 		synchronized (this.members) {
 			return this.members.size() == Party.MAX_MEMBERS;
@@ -72,13 +97,28 @@ public class Party implements Saveable {
 		}
 	}
 
-	public void set(final int index, final Monster member) {
+	/**
+	 * Sets the monster at the given index to the specified member. If the index
+	 * is not valid (i.e. negative, or above the max index), null is returned
+	 * and no change is made.
+	 * 
+	 * @param index the index to set or replace
+	 * @param member the new member at the set index
+	 * @return null or the member that was in that index before if it replaced
+	 *         one
+	 */
+	public Monster set(final int index, final Monster member) {
 		if (index < 0 || index > Party.MAX_MEMBERS) {
-			return;
+			return null;
 		}
+		Monster old = null;
 		synchronized (this.members) {
+			if (this.members.get(index) != null) {
+				old = this.members.get(index);
+			}
 			this.members.set(index, member);
 		}
+		return old;
 	}
 
 	/**

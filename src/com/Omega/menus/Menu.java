@@ -29,6 +29,12 @@ public class Menu extends IkWindow {
 	private int size;
 	private ArrayList<MenuItem> items;
 
+	/**
+	 * Constructs a menu that has space for width*height items.
+	 * 
+	 * @param width How many columns the menu should have
+	 * @param height How many rows the menu should have
+	 */
 	public Menu(final int width, final int height) {
 		this.w = width;
 		this.h = height;
@@ -41,6 +47,10 @@ public class Menu extends IkWindow {
 		this.dirty();
 	}
 
+	/**
+	 * Adds a child if and only if it is a menu item. Increase the height
+	 * (number of rows) if the menu is full.
+	 */
 	@Override
 	public synchronized void addChild(IkWindow item) {
 		if (!(item instanceof MenuItem)) {

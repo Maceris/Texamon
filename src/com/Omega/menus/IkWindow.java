@@ -29,6 +29,14 @@ import android.graphics.RectF;
 
 import com.Omega.Point;
 
+/**
+ * A window on the screen. These can nest and are aligned, sized, and positioned
+ * relative to the parent (another window, or the whole canvas for top level
+ * windows).
+ * 
+ * @author Ches Burks
+ *
+ */
 public class IkWindow {
 
 	/**

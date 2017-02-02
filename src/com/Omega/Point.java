@@ -16,20 +16,48 @@
  *******************************************************************************/
 package com.Omega;
 
+/**
+ * 
+ * A 2d point with float values
+ * 
+ * @author Ches Burks
+ *
+ */
 public class Point {
+	/**
+	 * The x value
+	 */
 	public float x;
+	/**
+	 * The y value
+	 */
 	public float y;
 
+	/**
+	 * Constructs a new Point with x and y initialized to 0.
+	 */
 	public Point() {
 		this.x = 0;
 		this.y = 0;
 	}
 
+	/**
+	 * Constructs a new Point with given initial values
+	 * 
+	 * @param x2 the initial x value
+	 * @param y2 the initial y value
+	 */
 	public Point(final float x2, final float y2) {
 		this.x = x2;
 		this.y = y2;
 	}
 
+	/**
+	 * Sets the x and y values
+	 * 
+	 * @param x2 the new x value
+	 * @param y2 the new y value
+	 */
 	public void set(final float x2, final float y2) {
 		this.x = x2;
 		this.y = y2;

@@ -60,76 +60,16 @@ import com.Omega.util.DuplicateEntry;
 import com.Omega.util.IntegerTree;
 import com.Omega.util.Random;
 
+/**
+ * The main class, houses the activity.
+ * 
+ * @author Ches Burks
+ *
+ */
 public class MainClass extends Activity implements Runnable {
 
 	private static class MyView extends View //
 	{
-		IntegerTree idTree;
-		boolean dragging; // are we dragging some object
-		float startMouseDragX;
-		float startMouseDragY;
-		boolean doLogging = false;
-
-		boolean firstTime; // indicates that this is the beginning of a run
-		boolean menudown;
-
-		int CANVAS_WIDTH = -1;
-		int CANVAS_HEIGHT = -1;
-		boolean canvasSizeDirty = true;
-
-		GameData gameData;
-
-		int drawdelay;
-		MovableObject player;
-
-		MovableObject battleScreen;
-		MovableObject teamplaceholder;
-		MovableObject enemyplaceholder;
-		MovableObject insideplayer;
-		MovableObject loadButton;
-		MovableObject menureturnbutton;
-
-		IkWindow wStart;
-		IkWindow wBag;
-		IkWindow wTexamon;
-		IkWindow wStartButton;
-		IkWindow wDPad;
-		IkWindow wDPadUp;
-		IkWindow wDPadRight;
-		IkWindow wDPadDown;
-		IkWindow wDPadLeft;
-		IkWindow wDpadCenter;
-		Menu mStart;
-		Menu mBag;
-		Menu mTexamon;
-		MenuItem menuButton;
-		MenuItem exitButton;
-
-		private Random rand;
-
-		AlertDialog.Builder comingsoonbuilder = new AlertDialog.Builder(
-				this.getContext());
-
-		AlertDialog comingsoonalert = this.comingsoonbuilder.create();
-
-		AlertDialog.Builder errorbuilder = new AlertDialog.Builder(
-				this.getContext());
-
-		AlertDialog erroralert;
-
-		MovableObject exitdoor;
-
-		MovableObject healer;
-
-		MovableObject startButton;
-
-		Context thisContext;
-
-		int winWidth = 0;
-		int winHeight = 0;
-
-		final int TILES_PER_SCREEN = 11;
-
 		/**
 		 * Create a bitmap based on the data in the map structure.
 		 *
@@ -256,6 +196,67 @@ public class MainClass extends Activity implements Runnable {
 			// In case the image didn't load properly
 			return null;
 		}
+
+		IntegerTree idTree;
+		boolean dragging; // are we dragging some object
+		float startMouseDragX;
+		float startMouseDragY;
+
+		boolean doLogging = false;
+		boolean firstTime; // indicates that this is the beginning of a run
+
+		int CANVAS_WIDTH = -1;
+		int CANVAS_HEIGHT = -1;
+
+		boolean canvasSizeDirty = true;
+
+		GameData gameData;
+
+		MovableObject player;
+		IkWindow wStart;
+		IkWindow wBag;
+		IkWindow wTexamon;
+		IkWindow wStartButton;
+		IkWindow wDPad;
+		IkWindow wDPadUp;
+		IkWindow wDPadRight;
+		IkWindow wDPadDown;
+		IkWindow wDPadLeft;
+		IkWindow wDpadCenter;
+		Menu mStart;
+		Menu mBag;
+		Menu mTexamon;
+		MenuItem menuButton;
+
+		MenuItem exitButton;
+
+		private Random rand;
+
+		AlertDialog.Builder comingsoonbuilder = new AlertDialog.Builder(
+				this.getContext());
+
+		AlertDialog comingsoonalert = this.comingsoonbuilder.create();
+
+		AlertDialog.Builder errorbuilder = new AlertDialog.Builder(
+				this.getContext());
+
+		AlertDialog erroralert;
+
+		MovableObject startButton;
+
+		Context thisContext;
+		int winWidth = 0;
+
+		int winHeight = 0;
+
+		final int TILES_PER_SCREEN = 11;
+
+		final int COUNT_MAX = 10;
+
+		int count = this.COUNT_MAX;// TODO remove this
+		Rect mapSource = new Rect();
+
+		Rect mapDest = new Rect();
 
 		public MyView(Context context, GameData newData) {
 
@@ -512,8 +513,6 @@ public class MainClass extends Activity implements Runnable {
 
 			this.idTree = new IntegerTree();
 
-			this.drawdelay = 0;
-
 			this.comingsoonbuilder.setMessage("Coming soon!");
 			this.comingsoonbuilder.setNeutralButton(":(",
 					new DialogInterface.OnClickListener() {
@@ -540,25 +539,6 @@ public class MainClass extends Activity implements Runnable {
 			// TODO remove this
 			// for now/testing just jump into the game
 			this.gameData.setState(GameState.INGAME);
-		}
-
-		final int COUNT_MAX = 10;
-		int count = this.COUNT_MAX;// TODO remove this
-
-		public void battleScreen(Canvas canvas) {
-			// TODO completely redo everything
-			try {
-				this.battleScreen.draw(canvas);
-				this.enemyplaceholder.draw(canvas);
-				this.teamplaceholder.draw(canvas);
-			}
-			catch (Exception e) {
-				this.erroralert.setMessage("ERROR OCCURED! error " + e
-						+ "\n at line" + e.getStackTrace()[2].getLineNumber());
-				this.erroralert.show();
-				e.printStackTrace();
-			}
-
 		}
 
 		public Monster createChar(String type, String name, String locat) {
@@ -612,12 +592,6 @@ public class MainClass extends Activity implements Runnable {
 				this.startButton.setY(this.winHeight / 2);
 				this.startButton.draw(canvas);
 			}
-			if (this.loadButton != null) {
-				this.loadButton.setX(this.winWidth / 2
-						- this.loadButton.getWidth() / 2);
-				this.loadButton.setY(this.winHeight / 4 * 3);
-				this.loadButton.draw(canvas);
-			}
 
 		} // end of public void firstTimeScreen(Canvas canvas)
 
@@ -655,9 +629,6 @@ public class MainClass extends Activity implements Runnable {
 				String[] team4 = new String[21];
 				String[] team5 = new String[21];
 				String[] team6 = new String[21];
-
-				this.insideplayer.setX(Integer.decode(tempparts[10]));
-				this.insideplayer.setY(Integer.decode(tempparts[12]));
 
 				if (tempparts[14] != null && tempparts[14] != "") {
 					for (int i = 0; i < 21; i++) {
@@ -737,38 +708,11 @@ public class MainClass extends Activity implements Runnable {
 							(this.winHeight / 2) - (this.winHeight / 16),
 							this.winWidth / 2, this.winHeight / 8,
 							this.getResources());
-			this.loadButton =
-					new MovableObject("load.png", R.drawable.load,
-							(this.winWidth / 2) - (this.winWidth / 4),
-							(this.winHeight * 3 / 4) - (this.winHeight / 16),
-							this.winWidth / 2, this.winHeight / 8,
-							this.getResources());
-			this.battleScreen =
-					new MovableObject("battlegui2.png", R.drawable.battlegui2,
-							0, 0, this.winWidth, this.winHeight,
-							this.getResources());
 			this.player =
 					new MovableObject("player.png", R.drawable.player,
 							(this.winWidth / 2) - 3, (this.winHeight / 2) - 3,
 							7, 7, this.getResources());
-			this.menureturnbutton =
-					new MovableObject("menuupbutton.png",
-							R.drawable.menuupbutton, 10, this.winHeight - 60,
-							50, 50, this.getResources());
-			this.insideplayer =
-					new MovableObject("insideplayer.png",
-							R.drawable.insideplayer, 50, 50, 50, 50,
-							this.getResources());
-			this.exitdoor =
-					new MovableObject("exitdoor.png", R.drawable.exitdoor, 50,
-							25, 10, 10, this.getResources());
-			this.healer =
-					new MovableObject("blank.png", R.drawable.blank, 5, 32, 14,
-							17, this.getResources());
 		}
-
-		Rect mapSource = new Rect();
-		Rect mapDest = new Rect();
 
 		// this method will get called every threadDelay (20) ms
 		@Override
@@ -864,13 +808,14 @@ public class MainClass extends Activity implements Runnable {
 				canvas.drawBitmap(this.gameData.getCurMapImg(), this.mapSource,
 						this.mapDest, null);
 
-				this.player.draw(canvas, canvas.getWidth() / TILES_PER_SCREEN,
-						canvas.getHeight() / TILES_PER_SCREEN);
+				this.player.draw(canvas, canvas.getWidth()
+						/ this.TILES_PER_SCREEN, canvas.getHeight()
+						/ this.TILES_PER_SCREEN);
 
 				this.drawMenus(canvas);
 
 				if (this.gameData.getState() == GameState.BATTLE) {
-					this.battleScreen(canvas);
+					/* NOP */;
 				}
 
 			}
@@ -942,12 +887,6 @@ public class MainClass extends Activity implements Runnable {
 					break;
 				case BATTLE:
 					// TODO battle
-					if (this.menudown
-							&& this.menureturnbutton.containsPoint(new Point(x,
-									y))) {
-						this.menudown = false;
-
-					}
 				case GAME_OVER:
 					break;
 				case MAIN_MENU:
@@ -1079,13 +1018,6 @@ public class MainClass extends Activity implements Runnable {
 						this.gameData.setState(GameState.INGAME);
 
 						this.startButton.setX(-200);
-						this.loadButton.setX(-200);
-					}
-					if (this.loadButton.getRect().contains(x, y)) {
-						this.gameData.setState(GameState.INGAME);
-						this.load();
-						this.startButton.setX(-200);
-						this.loadButton.setX(-200);
 					}
 				}
 				if (!this.gameData.isMoveNone()) {

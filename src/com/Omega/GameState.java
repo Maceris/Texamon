@@ -16,9 +16,27 @@
  *******************************************************************************/
 package com.Omega;
 
+/**
+ * The current state of a game.
+ * 
+ * @author Ches Burks
+ *
+ */
 public enum GameState {
+	/**
+	 * The player is currently in a map
+	 */
 	INGAME,
+	/**
+	 * The player is having a battle
+	 */
 	BATTLE,
+	/**
+	 * The game has yet to start and is in the main menu
+	 */
 	MAIN_MENU,
+	/**
+	 * The game ended. This might not be used.
+	 */
 	GAME_OVER;
 }

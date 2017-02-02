@@ -31,7 +31,7 @@ import android.graphics.Bitmap;
  */
 @SuppressLint("RtlHardcoded")
 public class GameData {
-	enum Direction {
+	private enum Direction {
 		NONE,
 		UP,
 		RIGHT,
@@ -48,8 +48,11 @@ public class GameData {
 	private Party team;
 	private Bitmap curMapImg;
 
-	public Direction movement;//TODO make private again
+	private Direction movement;
 
+	/**
+	 * Constructs a new game data object with default values
+	 */
 	public GameData() {
 		this.playerName = "Name";
 		this.state = GameState.MAIN_MENU;
@@ -150,7 +153,7 @@ public class GameData {
 	public synchronized boolean isInGrass() {
 		int newx = this.xPos;
 		int newy = this.yPos;
-		
+
 		if (this.currentMap.getLayerCount() >= 7) {
 			if (((TileLayer) this.currentMap.getLayer(2)).getTileAt(newx, newy) != null) {
 				// plants

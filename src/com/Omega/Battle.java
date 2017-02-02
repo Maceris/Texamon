@@ -43,19 +43,19 @@ public class Battle {
 			final Monster defender, final Move move) {
 		float lvl = attacker.getCurrentLVL();
 		float basepower = move.getPower();
-		float atk = attacker.getTexamon().getATK();
-		float def = defender.getTexamon().getDEF();
+		float atk = attacker.getSpecies().getATK();
+		float def = defender.getSpecies().getDEF();
 		float ch = 1; // modify this
 		float r = (100 - Battle.rand.getIntBetween(0, 15));
 		double stab = 1; // modify this
 		double type1 = 1; // modify this
 		int damagedone = 0;
-		if (attacker.getTexamon().getType().equals(move.getType())) {
+		if (attacker.getSpecies().getType().equals(move.getType())) {
 			stab = 1.5;
 		}
 		type1 =
-				Battle.getTypeDamage(attacker.getTexamon().getType(), defender
-						.getTexamon().getType());
+				Battle.getTypeDamage(attacker.getSpecies().getType(), defender
+						.getSpecies().getType());
 		int rd = Battle.rand.getIntBetween(0, 400);
 		if (rd == 7) {
 			ch = 2;
@@ -66,6 +66,14 @@ public class Battle {
 		return damagedone;
 	}
 
+	/**
+	 * Returns true if the given monster was caught using either a normal ball
+	 * or great ball.
+	 * 
+	 * @param foe The monster to try catching
+	 * @param isGreatBall true for a great ball, false for a normal one
+	 * @return true if the monster was caught, false if it was not
+	 */
 	public static boolean didBallCatch(final Monster foe,
 			final boolean isGreatBall) {
 		float randOne;

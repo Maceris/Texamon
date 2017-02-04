@@ -149,6 +149,13 @@ public class WindowDrawer {
 			new ColorMatrixColorFilter(WindowDrawer.COLOR_M_NORMAL);
 	private static Paint paint = new Paint();
 
+	/**
+	 * Draws a window onto a canvas.
+	 * 
+	 * @param c The canvas to draw on.
+	 * @param win The window to draw.
+	 * @param style The style to use in drawing the window.
+	 */
 	public static void drawWindow(Canvas c, IkWindow win, WindowStyle style) {
 		if (c == null) {
 			// TODO log error
@@ -166,6 +173,15 @@ public class WindowDrawer {
 				style.colorScheme);
 	}
 
+	/**
+	 * Draws a window on a canvas, with a given style.
+	 * 
+	 * @param c The canvas to draw onto.
+	 * @param win The window to draw.
+	 * @param style The style to use in drawing the window.
+	 * @param border The border to use on the window.
+	 * @param colorScheme The color scheme to use for the window.
+	 */
 	public static void drawWindow(Canvas c, IkWindow win, WinStyle style,
 			Border border, ColorScheme colorScheme) {
 		if (c == null || win == null || style == null || border == null
@@ -270,6 +286,16 @@ public class WindowDrawer {
 		}
 	}
 
+	/**
+	 * Draws a window on a canvas, with a given style and background image.
+	 * 
+	 * @param c The canvas to draw onto.
+	 * @param win The window to draw.
+	 * @param style The style to use in drawing the window.
+	 * @param border The border to use on the window.
+	 * @param colorScheme The color scheme to use for the window.
+	 * @param texture The texture to draw as the background.
+	 */
 	public static void drawWindow(Canvas c, IkWindow win, WinStyle style,
 			Border border, ColorScheme colorScheme, Bitmap texture) {
 		if (c == null || win == null || style == null || border == null

@@ -22,6 +22,12 @@ import android.graphics.Canvas;
 
 import com.Omega.Point;
 
+/**
+ * A 2d array of menu items that can have some associated action.
+ * 
+ * @author Ches Burks
+ *
+ */
 public class Menu extends IkWindow {
 
 	private int w;
@@ -55,7 +61,7 @@ public class Menu extends IkWindow {
 	public synchronized void addChild(IkWindow item) {
 		if (!(item instanceof MenuItem)) {
 			System.err.println("item " + item.getClass()
-					+ " rejected from menu due to type");
+				+ " rejected from menu due to type");
 			// reject it if it's not a menu item
 			return;
 		}
@@ -122,30 +128,43 @@ public class Menu extends IkWindow {
 		this.recalculateItems();
 	}
 
+	/**
+	 * Recalculate the menu items contained in the menu so they fit well.
+	 */
 	protected synchronized void recalculateItems() {
 		int i;
 		int j;
 		for (j = 0; j < this.h; ++j) {
 			for (i = 0; i < this.w; ++i) {
 				this.items.get((j) * this.w + i).setLocalHeight(
-						(1.0f / this.h) * 0.80f);
+					(1.0f / this.h) * 0.80f);
 				this.items.get((j) * this.w + i).setLocalWidth(
-						(1.0f / this.w) * 0.80f);
+					(1.0f / this.w) * 0.80f);
 				this.items.get((j) * this.w + i).setDisplacement(
-						new Point((1.0f / this.w) * i + 0.1f / this.w,
-								(1.0f / this.h) * j + 0.1f / this.h));
+					new Point((1.0f / this.w) * i + 0.1f / this.w,
+						(1.0f / this.h) * j + 0.1f / this.h));
 				this.items.get((j) * this.w + i).setAlignment(
-						Alignment.NORTH_WEST);
+					Alignment.NORTH_WEST);
 			}
 		}
 	}
 
+	/**
+	 * Sets the number of rows in the menu.
+	 * 
+	 * @param height The height, as rows, in the table of entries.
+	 */
 	public synchronized void setHeight(final int height) {
 		this.h = height;
 		this.size = this.w * this.h;
 		this.dirty();
 	}
 
+	/**
+	 * Sets teh number of columns in the menu.
+	 * 
+	 * @param width The width, as columns, in the table of entries.
+	 */
 	public synchronized void setWidth(final int width) {
 		this.w = width;
 		this.size = this.w * this.h;

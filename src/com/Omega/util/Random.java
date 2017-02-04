@@ -16,46 +16,23 @@
  *******************************************************************************/
 package com.Omega.util;
 
+import android.annotation.SuppressLint;
+import java.security.SecureRandom;
+
 /**
  * A Mersenne twister algorithm.
  */
 public class Random {
-	private int[] mt = new int[624];
-	private int index = 0;
+	private SecureRandom random;
 
 	/**
 	 * Creates a random generator, and it is seeded automatically.
 	 */
+	@SuppressLint("TrulyRandom")
 	public Random() {
 		// Not intended to be completely secure, but at least fairly random
-		java.security.SecureRandom random = new java.security.SecureRandom();
-		int seed = random.nextInt();
-		this.initializeGenerator(seed);
-	}
-
-	/**
-	 * Initializes the generator with the given seed.
-	 *
-	 * @param seed the seed to use
-	 */
-	public Random(final int seed) {
-		this.initializeGenerator(seed);
-	}
-
-	/**
-	 * Refill the array with generated numbers.
-	 */
-	private void generateNumbers() {
-		int i;
-		for (i = 0; i < 623; i++) {
-			int y =
-					(this.mt[i] + 0x80000000)
-							+ (this.mt[(i + 1) % 624] + 0x7fffffff);
-			this.mt[i] = this.mt[(i + 397) % 624] ^ (y >> 1);
-			if (y % 2 != 0) { // y is odd
-				this.mt[i] = this.mt[i] ^ 0x9908b0df;
-			}
-		}
+		random = new SecureRandom();
+		random.setSeed(SecureRandom.getSeed(16));
 	}
 
 	/**
@@ -75,35 +52,7 @@ public class Random {
 	 * @return The next int
 	 */
 	public int getNext() {
-		if (this.index == 0) {
-			this.generateNumbers();
-		}
-		int y = this.mt[this.index];
-
-		y = y ^ (y >> 11);
-		y = y ^ (y << 7 + 0x9d2c5680);
-		y = y ^ (y << 15 + 0xefc60000);
-		y = y ^ (y >> 18);
-
-		this.index = (this.index + 1) % 624;
-
-		return y;
-	}
-
-	/**
-	 * Initialize the generator with the given seed.
-	 *
-	 * @param seed The seed to use
-	 */
-	private void initializeGenerator(int seed) {
-		this.index = 0;
-		this.mt[0] = seed;
-
-		int i;
-		for (i = 1; i <= 623; i++) {
-			this.mt[i] =
-					1812433253 * (this.mt[i - 1] ^ (this.mt[i - 1] >> 30)) + i;
-		}
+		return random.nextInt();
 	}
 
 	/**
@@ -112,7 +61,7 @@ public class Random {
 	 * @return The next boolean
 	 */
 	public boolean nextBoolean() {
-		return (this.getNext() >> 30) != 0;
+		return random.nextBoolean();
 	}
 
 	/**
@@ -131,11 +80,72 @@ public class Random {
 	}
 
 	/**
+	 * Generates and stores random bytes in the given byte array.
+	 * 
+	 * @param bytes The byte array to store values in.
+	 * @see java.security.SecureRandom#nextBytes(byte[])
+	 */
+	public void nextBytes(byte[] bytes) {
+		this.random.nextBytes(bytes);
+	}
+
+	/**
+	 * Returns the next double.
+	 * 
+	 * @return A double.
+	 * @see java.util.Random#nextDouble()
+	 */
+	public double nextDouble() {
+		return this.random.nextDouble();
+	}
+
+	/**
 	 * Returns the next random {@link Float float}.
 	 *
 	 * @return The next float
 	 */
 	public float nextFloat() {
-		return (this.getNext() >> 7) / ((float) (1 << 24));
+		return random.nextFloat();
+	}
+
+	/**
+	 * Returns a normally distributed double.
+	 * 
+	 * @return A double.
+	 * @see java.util.Random#nextGaussian()
+	 */
+	public double nextGaussian() {
+		return this.random.nextGaussian();
+	}
+
+	/**
+	 * Returns the next integer.
+	 * 
+	 * @return An int.
+	 * @see java.util.Random#nextInt()
+	 */
+	public int nextInt() {
+		return this.random.nextInt();
+	}
+
+	/**
+	 * Returns an int in the half open range [0, n).
+	 * 
+	 * @param n the upper bound.
+	 * @return A random int in a range.
+	 * @see java.util.Random#nextInt(int)
+	 */
+	public int nextInt(int n) {
+		return this.random.nextInt(n);
+	}
+
+	/**
+	 * Returns a random long.
+	 * 
+	 * @return A long.
+	 * @see java.util.Random#nextLong()
+	 */
+	public long nextLong() {
+		return this.random.nextLong();
 	}
 }

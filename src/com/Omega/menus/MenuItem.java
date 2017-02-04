@@ -21,12 +21,21 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 
+/**
+ * A textual item in a menu. This can have an associated action.
+ * 
+ * @author Ches Burks
+ *
+ */
 public class MenuItem extends IkWindow {
 	private String text;
 	private Paint textPaint;
 	private final Paint defPaint;
 	private boolean dirty2;
 
+	/**
+	 * Creates a new menu item with default text.
+	 */
 	public MenuItem() {
 		this.defPaint = new Paint();
 		this.textPaint = new Paint();
@@ -35,6 +44,11 @@ public class MenuItem extends IkWindow {
 		this.dirty();
 	}
 
+	/**
+	 * Creates a new menu item with supplied text.
+	 * 
+	 * @param theText The text to display for this item.
+	 */
 	public MenuItem(final String theText) {
 		this();
 		this.text = theText;
@@ -59,13 +73,17 @@ public class MenuItem extends IkWindow {
 			return;
 		}
 		c.drawText(
-				this.text,
-				this.getActualDisplaceX() * c.getWidth(),
-				this.getActualDisplaceY() * c.getHeight() + 0.9f
-						* this.getActualHeight() * c.getHeight(),
-				this.textPaint);
+			this.text,
+			this.getActualDisplaceX() * c.getWidth(),
+			this.getActualDisplaceY() * c.getHeight() + 0.9f
+				* this.getActualHeight() * c.getHeight(), this.textPaint);
 	}
 
+	/**
+	 * Returns the parent of the menu item, which is a menu.
+	 * 
+	 * @return The menu that contains this item.
+	 */
 	public synchronized Menu getParent() {
 		if (!(this.parent instanceof Menu)) {
 			this.parent.removeChild(this);
@@ -73,14 +91,29 @@ public class MenuItem extends IkWindow {
 		return (Menu) this.parent;
 	}
 
+	/**
+	 * Returns the text that is displayed for this item.
+	 * 
+	 * @return The associated text.
+	 */
 	public synchronized String getText() {
 		return this.text;
 	}
 
+	/**
+	 * Returns true if this item has a parent, false if the parent is null.
+	 * 
+	 * @return true if this item has a parent, false otherwise.
+	 */
 	public synchronized boolean hasParent() {
 		return this.parent != null;
 	}
 
+	/**
+	 * Calculate how large text should be on the given canvas.
+	 * 
+	 * @param c The canvas to calculate size based on.
+	 */
 	protected synchronized void recalculateTextSize(Canvas c) {
 		Rect bounds = new Rect();
 		this.defPaint.getTextBounds(this.text, 0, this.text.length(), bounds);
@@ -90,7 +123,7 @@ public class MenuItem extends IkWindow {
 		float mod1 = bound.width() / this.defPaint.measureText(this.text);
 		float mod2 = (bound.height() * 1.0f) / bounds.height();
 		this.textPaint.setTextSize((mod1 <= mod2 ? mod1 : mod2)
-				* this.defPaint.getTextSize());
+			* this.defPaint.getTextSize());
 		this.dirty2 = false;
 	}
 
@@ -104,6 +137,11 @@ public class MenuItem extends IkWindow {
 		this.dirty();
 	}
 
+	/**
+	 * Sets the text to display for this item.
+	 * 
+	 * @param newText The text to use for this item.
+	 */
 	public synchronized void setText(final String newText) {
 		this.text = newText;
 		this.dirty();

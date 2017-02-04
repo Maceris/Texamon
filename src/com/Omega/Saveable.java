@@ -17,17 +17,34 @@
 package com.Omega;
 
 /**
- * Something that can be stored in and loaded from
+ * Something that can be stored in and loaded from a file.
  *
  * @author Ches Burks
  *
  */
 public interface Saveable {
 
+	/**
+	 * The beginning of a nested object.
+	 */
 	public static final String NEST_BEGIN = "{";
+	/**
+	 * The end of a nested object.
+	 */
 	public static final String NEST_END = "}";
+	/**
+	 * Splits different parts.
+	 */
 	public static final String DELIMITER = "/";
+	/**
+	 * Used to escape characters.
+	 */
 	public static final String ESCAPE = "+";
 
-	public void fromText(String text);
+	/**
+	 * Creates an object based on the given text.
+	 * 
+	 * @param text The text to convert from.
+	 */
+	public void fromText(final String text);
 }

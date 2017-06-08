@@ -16,20 +16,51 @@
  *******************************************************************************/
 package com.Omega;
 
+/**
+ * The type of a Texamon, defining what moves it can learn, what moves it is
+ * effective or weak against, and what moves it gets bonus damage for using.
+ * 
+ * @author Ches Burks
+ *
+ */
 public enum Type {
-	WATER("water"),
-	PLANT("plant"),
-	NORMAL("normal"),
-	STONE("stone"),
+	/**
+	 * The glitch type, not typically assigned to anything but exists as a hacky
+	 * way to you can tell there is a problem and possible easter egg.
+	 */
 	GLITCH("glitch"),
+	/**
+	 * The water type.
+	 */
+	WATER("water"),
+	/**
+	 * The plant type.
+	 */
+	PLANT("plant"),
+	/**
+	 * The default, or normal, type.
+	 */
+	NORMAL("normal"),
+	/**
+	 * The stone type.
+	 */
+	STONE("stone"),
+	/**
+	 * The fire type.
+	 */
 	FIRE("fire");
 
-	private String typeName;
+	private final String typeName;
 
 	private Type(String name) {
 		this.typeName = name;
 	}
 
+	/**
+	 * Returns a reasonable human readable name for the type.
+	 * 
+	 * @return The type name.
+	 */
 	public String getName() {
 		return this.typeName;
 	}

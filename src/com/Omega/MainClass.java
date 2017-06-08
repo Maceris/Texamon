@@ -16,16 +16,6 @@
  *******************************************************************************/
 package com.Omega;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-
-import tiled.core.Map;
-import tiled.core.Tile;
-import tiled.core.TileLayer;
-import tiled.io.TMXMapReader;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -45,7 +35,6 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
-
 import com.Omega.menus.Alignment;
 import com.Omega.menus.IWindowCallback;
 import com.Omega.menus.IkWindow;
@@ -59,6 +48,17 @@ import com.Omega.menus.WindowStyle;
 import com.Omega.util.DuplicateEntry;
 import com.Omega.util.IntegerTree;
 import com.Omega.util.Random;
+import tiled.core.Map;
+import tiled.core.Tile;
+import tiled.core.TileLayer;
+import tiled.io.TMXMapReader;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.util.HashMap;
 
 /**
  * The main class, houses the activity.
@@ -70,6 +70,7 @@ public class MainClass extends Activity implements Runnable {
 
 	private static class MyView extends View //
 	{
+
 		/**
 		 * Create a bitmap based on the data in the map structure.
 		 *
@@ -80,7 +81,7 @@ public class MainClass extends Activity implements Runnable {
 		 * @return bitmap of the map
 		 */
 		public static Bitmap createBitmap(Map m, Context c, int startLayer,
-				int endLayer) {
+			int endLayer) {
 
 			try {
 				AssetManager assetManager = c.getAssets();
@@ -93,9 +94,9 @@ public class MainClass extends Activity implements Runnable {
 				// In a production engine, map size should either be restricted,
 				// or the map should be loaded to memory on the fly.
 				Bitmap mapImage =
-						Bitmap.createBitmap(m.getWidth() * m.getTileWidth(),
-								m.getHeight() * m.getTileHeight(),
-								Bitmap.Config.ARGB_8888);
+					Bitmap.createBitmap(m.getWidth() * m.getTileWidth(),
+						m.getHeight() * m.getTileHeight(),
+						Bitmap.Config.ARGB_8888);
 
 				// Load all tilesets that are used into memory. Again, not
 				// very efficient, but loading the image, dereferencing, and
@@ -106,9 +107,9 @@ public class MainClass extends Activity implements Runnable {
 
 				for (int i = 0; i < tilesets.length; i++) {
 					tilesets[i] =
-							BitmapFactory.decodeStream(assetManager.open(m
-									.getTileSets().get(i).getTilebmpFile()
-									.replaceAll("^/", "")));
+						BitmapFactory.decodeStream(assetManager.open(m
+							.getTileSets().get(i).getTilebmpFile()
+							.replaceAll("^/", "")));
 				}
 
 				// Create a Canvas reference to our map Bitmap
@@ -146,11 +147,11 @@ public class MainClass extends Activity implements Runnable {
 							int currentFirstGID;
 							for (int l = m.getTileSets().size() - 1; i >= 0; i--) {
 								currentFirstGID =
-										m.getTileSets().get(l).getFirstGid();
+									m.getTileSets().get(l).getFirstGid();
 								if (currentFirstGID <= currentGID) {
 									localGID =
-											Long.valueOf(currentGID
-													- currentFirstGID);
+										Long.valueOf(currentGID
+											- currentFirstGID);
 									break;
 								}
 							}
@@ -176,7 +177,7 @@ public class MainClass extends Activity implements Runnable {
 								dest.right = dest.left + m.getTileWidth();
 
 								mapCanvas.drawBitmap(t.getImage(), source,
-										dest, paint);
+									dest, paint);
 							}
 
 						}
@@ -233,12 +234,12 @@ public class MainClass extends Activity implements Runnable {
 		private Random rand;
 
 		AlertDialog.Builder comingsoonbuilder = new AlertDialog.Builder(
-				this.getContext());
+			this.getContext());
 
 		AlertDialog comingsoonalert = this.comingsoonbuilder.create();
 
 		AlertDialog.Builder errorbuilder = new AlertDialog.Builder(
-				this.getContext());
+			this.getContext());
 
 		AlertDialog erroralert;
 
@@ -271,8 +272,8 @@ public class MainClass extends Activity implements Runnable {
 
 			try {
 				aurageMap =
-						reader.readMap(context.getAssets().open("aurage.tmx"),
-								context);
+					reader.readMap(context.getAssets().open("aurage.tmx"),
+						context);
 			}
 			catch (Exception e) {
 				e.printStackTrace(System.err);
@@ -301,34 +302,55 @@ public class MainClass extends Activity implements Runnable {
 			// TODO have a main menu
 
 			this.wStartButton =
-					new IkWindow(new Point(0.05f, 0.05f), Alignment.NORTH_EAST,
-							new Point(0.1f, 0.05f));
+				new IkWindow(new Point(0.05f, 0.05f), Alignment.NORTH_EAST,
+					new Point(0.1f, 0.05f));
 			Menu startMenu = new Menu(1, 1);
 			this.menuButton = new MenuItem("Start");
+
+			HashMap<Object, Object> menuState = new HashMap<Object, Object>();
+			menuState.put("wStart", this.wStart);
+			menuState.put("wStartButton", this.wStartButton);
+			this.menuButton.setStateObject(menuState);
+
 			this.menuButton.setCallback(new IWindowCallback() {
 				@Override
-				public void action() {
-					MyView.this.wStart.setVisible(true);
-					MyView.this.wStartButton.setVisible(false);
+				public void action(java.util.Map<Object, Object> state) {
+					if (state == null) {
+						Log.e("Texamon.MainClass",
+							"Menu button state object is null",
+							new NullPointerException());
+						return;
+					}
+					((IkWindow) state.get("wStart")).setVisible(true);
+					((IkWindow) state.get("wStartButton")).setVisible(false);
 				}
 			});
+
 			startMenu.addChild(this.menuButton);
 			this.wStartButton.addChild(startMenu);
 			this.exitButton = new MenuItem("Exit");
+
+			this.exitButton.setStateObject(menuState);
 			this.exitButton.setCallback(new IWindowCallback() {
 				@Override
-				public void action() {
-					MyView.this.wStart.setVisible(false);
-					MyView.this.wStartButton.setVisible(true);
+				public void action(java.util.Map<Object, Object> state) {
+					if (state == null) {
+						Log.e("Texamon.MainClass",
+							"Menu button state object is null",
+							new NullPointerException());
+						return;
+					}
+					((IkWindow) state.get("wStart")).setVisible(false);
+					((IkWindow) state.get("wStartButton")).setVisible(true);
 				}
 			});
 
 			WindowManager.registerWin(this.wStartButton,
-					WindowManager.BASE_HEIGHT, "StartButton");
+				WindowManager.BASE_HEIGHT, "StartButton");
 
 			this.wStart =
-					new IkWindow(new Point(0.05f, 0.05f), Alignment.NORTH_EAST,
-							new Point(0.5f, 0.3f));
+				new IkWindow(new Point(0.05f, 0.05f), Alignment.NORTH_EAST,
+					new Point(0.5f, 0.3f));
 			this.mStart = new Menu(1, 6);
 			this.mStart.addChild(new MenuItem("Texamon"));
 			this.mStart.addChild(new MenuItem("Items"));
@@ -339,11 +361,11 @@ public class MainClass extends Activity implements Runnable {
 			this.wStart.addChild(this.mStart);
 
 			this.wTexamon =
-					new IkWindow(new Point(0.0f, 0.00f), Alignment.NORTH_EAST,
-							new Point(1.0f, 1.0f));
+				new IkWindow(new Point(0.0f, 0.00f), Alignment.NORTH_EAST,
+					new Point(1.0f, 1.0f));
 			this.wBag =
-					new IkWindow(new Point(-1.0f, 0.05f), Alignment.WEST,
-							new Point(1.0f, 0.5f));
+				new IkWindow(new Point(-1.0f, 0.05f), Alignment.WEST,
+					new Point(1.0f, 0.5f));
 			this.mBag = new Menu(1, 6);
 			this.mBag.addChild(new MenuItem("Small Potion"));
 			this.mBag.addChild(new MenuItem("Medium Potion"));
@@ -359,41 +381,40 @@ public class MainClass extends Activity implements Runnable {
 			this.wTexamon.setVisible(false);
 
 			WindowManager.registerWin(this.wStart,
-					WindowManager.getHeight(this.wStartButton) + 1,
-					"StartWindow");
+				WindowManager.getHeight(this.wStartButton) + 1, "StartWindow");
 			WindowManager.registerWin(this.wBag,
-					WindowManager.getHeight(this.wStart) + 1, "BagWindow");
+				WindowManager.getHeight(this.wStart) + 1, "BagWindow");
 			WindowManager.registerWin(this.wTexamon,
-					WindowManager.BASE_HEIGHT + 1, "TexamonWindow");
+				WindowManager.BASE_HEIGHT + 1, "TexamonWindow");
 
 			// create buttons
 			this.wDPad =
-					new IkWindow(new Point(0.05f, 0.05f), Alignment.SOUTH_WEST,
-							new Point(0.3f, 0.3f));
+				new IkWindow(new Point(0.05f, 0.05f), Alignment.SOUTH_WEST,
+					new Point(0.3f, 0.3f));
 			this.wDPadUp =
-					new IkWindow(new Point(0.0f, 0.0f), Alignment.NORTH,
-							new Point(0.33f, 0.33f));
+				new IkWindow(new Point(0.0f, 0.0f), Alignment.NORTH, new Point(
+					0.33f, 0.33f));
 			this.wDPadRight =
-					new IkWindow(new Point(0.0f, 0.0f), Alignment.EAST,
-							new Point(0.33f, 0.33f));
+				new IkWindow(new Point(0.0f, 0.0f), Alignment.EAST, new Point(
+					0.33f, 0.33f));
 			this.wDPadDown =
-					new IkWindow(new Point(0.0f, 0.0f), Alignment.SOUTH,
-							new Point(0.33f, 0.33f));
+				new IkWindow(new Point(0.0f, 0.0f), Alignment.SOUTH, new Point(
+					0.33f, 0.33f));
 			this.wDPadLeft =
-					new IkWindow(new Point(0.0f, 0.0f), Alignment.WEST,
-							new Point(0.33f, 0.33f));
+				new IkWindow(new Point(0.0f, 0.0f), Alignment.WEST, new Point(
+					0.33f, 0.33f));
 			this.wDpadCenter =
-					new IkWindow(new Point(0.0f, 0.0f), Alignment.CENTER,
-							new Point(0.33f, 0.33f));
+				new IkWindow(new Point(0.0f, 0.0f), Alignment.CENTER,
+					new Point(0.33f, 0.33f));
 			// format dpad
 			this.wDPad.setStyle(new WindowStyle(WinStyle.EMPTY_SQUARE,
-					Border.BORDERLESS, ColorScheme.DARK));
-			final WindowStyle buttonScheme =
-					new WindowStyle(WinStyle.SQUARE, Border.BORDERLESS,
-							ColorScheme.DARK);
-			final WindowStyle pressedScheme =
-					new WindowStyle(WinStyle.SQUARE, Border.BORDERLESS,
-							ColorScheme.LIGHT);
+				Border.BORDERLESS, ColorScheme.DARK));
+			WindowStyle buttonScheme =
+				new WindowStyle(WinStyle.SQUARE, Border.BORDERLESS,
+					ColorScheme.DARK);
+			WindowStyle pressedScheme =
+				new WindowStyle(WinStyle.SQUARE, Border.BORDERLESS,
+					ColorScheme.LIGHT);
 
 			this.wDPadUp.setStyle(buttonScheme);
 			this.wDPadRight.setStyle(buttonScheme);
@@ -401,103 +422,195 @@ public class MainClass extends Activity implements Runnable {
 			this.wDPadLeft.setStyle(buttonScheme);
 			this.wDpadCenter.setStyle(buttonScheme);
 
-			this.wDPadUp.setCallback(new IWindowCallback() {
+			HashMap<Object, Object> dPadState = new HashMap<Object, Object>();
+			dPadState.put("gameData", this.gameData);
+			dPadState.put("up", this.wDPadUp);
+			dPadState.put("down", this.wDPadDown);
+			dPadState.put("right", this.wDPadRight);
+			dPadState.put("left", this.wDPadLeft);
+			dPadState.put("pressed", pressedScheme);
+			dPadState.put("unpressed", buttonScheme);
 
+			this.wDPadUp.setStateObject(dPadState);
+			this.wDPadUp.setCallback(new IWindowCallback() {
 				@Override
-				public void action() {
-					if (MyView.this.gameData.isMoveUp()) {
-						MyView.this.wDPadUp.setStyle(buttonScheme);
+				public void action(java.util.Map<Object, Object> state) {
+					if (state == null) {
+						Log.e("Texamon.MainClass",
+							"D-Pad button state object is null",
+							new NullPointerException());
+						return;
 					}
-					else if (MyView.this.gameData.isMoveRight()) {
-						MyView.this.wDPadRight.setStyle(buttonScheme);
+					IkWindow up = (IkWindow) state.get("up");
+					IkWindow right = (IkWindow) state.get("right");
+					IkWindow down = (IkWindow) state.get("down");
+					IkWindow left = (IkWindow) state.get("left");
+					GameData data = (GameData) state.get("gameData");
+					WindowStyle pressed = (WindowStyle) state.get("pressed");
+					WindowStyle unpressed =
+						(WindowStyle) state.get("unpressed");
+
+					if (data.isMoveUp()) {
+						up.setStyle(unpressed);
 					}
-					else if (MyView.this.gameData.isMoveDown()) {
-						MyView.this.wDPadDown.setStyle(buttonScheme);
+					else if (data.isMoveRight()) {
+						right.setStyle(unpressed);
 					}
-					else if (MyView.this.gameData.isMoveLeft()) {
-						MyView.this.wDPadLeft.setStyle(buttonScheme);
+					else if (data.isMoveDown()) {
+						down.setStyle(unpressed);
 					}
-					MyView.this.gameData.moveUp();
-					MyView.this.wDPadUp.setStyle(pressedScheme);
+					else if (data.isMoveLeft()) {
+						left.setStyle(unpressed);
+					}
+					data.moveUp();
+					up.setStyle(pressed);
 
 				}
 			});
+
+			this.wDPadRight.setStateObject(dPadState);
 			this.wDPadRight.setCallback(new IWindowCallback() {
 				@Override
-				public void action() {
-					if (MyView.this.gameData.isMoveUp()) {
-						MyView.this.wDPadUp.setStyle(buttonScheme);
+				public void action(java.util.Map<Object, Object> state) {
+					if (state == null) {
+						Log.e("Texamon.MainClass",
+							"D-Pad button state object is null",
+							new NullPointerException());
+						return;
 					}
-					else if (MyView.this.gameData.isMoveRight()) {
-						MyView.this.wDPadRight.setStyle(buttonScheme);
+					IkWindow up = (IkWindow) state.get("up");
+					IkWindow right = (IkWindow) state.get("right");
+					IkWindow down = (IkWindow) state.get("down");
+					IkWindow left = (IkWindow) state.get("left");
+					GameData data = (GameData) state.get("gameData");
+					WindowStyle pressed = (WindowStyle) state.get("pressed");
+					WindowStyle unpressed =
+						(WindowStyle) state.get("unpressed");
+
+					if (data.isMoveUp()) {
+						up.setStyle(unpressed);
 					}
-					else if (MyView.this.gameData.isMoveDown()) {
-						MyView.this.wDPadDown.setStyle(buttonScheme);
+					else if (data.isMoveRight()) {
+						right.setStyle(unpressed);
 					}
-					else if (MyView.this.gameData.isMoveLeft()) {
-						MyView.this.wDPadLeft.setStyle(buttonScheme);
+					else if (data.isMoveDown()) {
+						down.setStyle(unpressed);
 					}
-					MyView.this.gameData.moveRight();
-					MyView.this.wDPadRight.setStyle(pressedScheme);
+					else if (data.isMoveLeft()) {
+						left.setStyle(unpressed);
+					}
+					data.moveRight();
+					right.setStyle(pressed);
+
 				}
 			});
+
+			this.wDPadDown.setStateObject(dPadState);
 			this.wDPadDown.setCallback(new IWindowCallback() {
-
 				@Override
-				public void action() {
-					if (MyView.this.gameData.isMoveUp()) {
-						MyView.this.wDPadUp.setStyle(buttonScheme);
+				public void action(java.util.Map<Object, Object> state) {
+					if (state == null) {
+						Log.e("Texamon.MainClass",
+							"D-Pad button state object is null",
+							new NullPointerException());
+						return;
 					}
-					else if (MyView.this.gameData.isMoveRight()) {
-						MyView.this.wDPadRight.setStyle(buttonScheme);
+					IkWindow up = (IkWindow) state.get("up");
+					IkWindow right = (IkWindow) state.get("right");
+					IkWindow down = (IkWindow) state.get("down");
+					IkWindow left = (IkWindow) state.get("left");
+					GameData data = (GameData) state.get("gameData");
+					WindowStyle pressed = (WindowStyle) state.get("pressed");
+					WindowStyle unpressed =
+						(WindowStyle) state.get("unpressed");
+
+					if (data.isMoveUp()) {
+						up.setStyle(unpressed);
 					}
-					else if (MyView.this.gameData.isMoveDown()) {
-						MyView.this.wDPadDown.setStyle(buttonScheme);
+					else if (data.isMoveRight()) {
+						right.setStyle(unpressed);
 					}
-					else if (MyView.this.gameData.isMoveLeft()) {
-						MyView.this.wDPadLeft.setStyle(buttonScheme);
+					else if (data.isMoveDown()) {
+						down.setStyle(unpressed);
 					}
-					MyView.this.gameData.moveDown();
-					MyView.this.wDPadDown.setStyle(pressedScheme);
+					else if (data.isMoveLeft()) {
+						left.setStyle(unpressed);
+					}
+					data.moveDown();
+					down.setStyle(pressed);
+
 				}
 			});
+
+			this.wDPadLeft.setStateObject(dPadState);
 			this.wDPadLeft.setCallback(new IWindowCallback() {
-
 				@Override
-				public void action() {
-					if (MyView.this.gameData.isMoveUp()) {
-						MyView.this.wDPadUp.setStyle(buttonScheme);
+				public void action(java.util.Map<Object, Object> state) {
+					if (state == null) {
+						Log.e("Texamon.MainClass",
+							"D-Pad button state object is null",
+							new NullPointerException());
+						return;
 					}
-					else if (MyView.this.gameData.isMoveRight()) {
-						MyView.this.wDPadRight.setStyle(buttonScheme);
+					IkWindow up = (IkWindow) state.get("up");
+					IkWindow right = (IkWindow) state.get("right");
+					IkWindow down = (IkWindow) state.get("down");
+					IkWindow left = (IkWindow) state.get("left");
+					GameData data = (GameData) state.get("gameData");
+					WindowStyle pressed = (WindowStyle) state.get("pressed");
+					WindowStyle unpressed =
+						(WindowStyle) state.get("unpressed");
+
+					if (data.isMoveUp()) {
+						up.setStyle(unpressed);
 					}
-					else if (MyView.this.gameData.isMoveDown()) {
-						MyView.this.wDPadDown.setStyle(buttonScheme);
+					else if (data.isMoveRight()) {
+						right.setStyle(unpressed);
 					}
-					else if (MyView.this.gameData.isMoveLeft()) {
-						MyView.this.wDPadLeft.setStyle(buttonScheme);
+					else if (data.isMoveDown()) {
+						down.setStyle(unpressed);
 					}
-					MyView.this.gameData.moveLeft();
-					MyView.this.wDPadLeft.setStyle(pressedScheme);
+					else if (data.isMoveLeft()) {
+						left.setStyle(unpressed);
+					}
+					data.moveLeft();
+					left.setStyle(pressed);
+
 				}
 			});
-			this.wDpadCenter.setCallback(new IWindowCallback() {
 
+			this.wDpadCenter.setStateObject(dPadState);
+			this.wDpadCenter.setCallback(new IWindowCallback() {
 				@Override
-				public void action() {
-					if (MyView.this.gameData.isMoveUp()) {
-						MyView.this.wDPadUp.setStyle(buttonScheme);
+				public void action(java.util.Map<Object, Object> state) {
+					if (state == null) {
+						Log.e("Texamon.MainClass",
+							"D-Pad button state object is null",
+							new NullPointerException());
+						return;
 					}
-					else if (MyView.this.gameData.isMoveRight()) {
-						MyView.this.wDPadRight.setStyle(buttonScheme);
+					IkWindow up = (IkWindow) state.get("up");
+					IkWindow right = (IkWindow) state.get("right");
+					IkWindow down = (IkWindow) state.get("down");
+					IkWindow left = (IkWindow) state.get("left");
+					GameData data = (GameData) state.get("gameData");
+					WindowStyle unpressed =
+						(WindowStyle) state.get("unpressed");
+
+					if (data.isMoveUp()) {
+						up.setStyle(unpressed);
 					}
-					else if (MyView.this.gameData.isMoveDown()) {
-						MyView.this.wDPadDown.setStyle(buttonScheme);
+					else if (data.isMoveRight()) {
+						right.setStyle(unpressed);
 					}
-					else if (MyView.this.gameData.isMoveLeft()) {
-						MyView.this.wDPadLeft.setStyle(buttonScheme);
+					else if (data.isMoveDown()) {
+						down.setStyle(unpressed);
 					}
-					MyView.this.gameData.moveNone();
+					else if (data.isMoveLeft()) {
+						left.setStyle(unpressed);
+					}
+					data.moveNone();
+
 				}
 			});
 
@@ -509,31 +622,31 @@ public class MainClass extends Activity implements Runnable {
 			this.wDPad.addChild(this.wDpadCenter);
 
 			WindowManager.registerWin(this.wDPad, WindowManager.BASE_HEIGHT,
-					"DPad");
+				"DPad");
 
 			this.idTree = new IntegerTree();
 
 			this.comingsoonbuilder.setMessage("Coming soon!");
 			this.comingsoonbuilder.setNeutralButton(":(",
-					new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int id) {
-							MyView.this.comingsoonalert.dismiss();
-						}
-					});
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int id) {
+						MyView.this.comingsoonalert.dismiss();
+					}
+				});
 			this.comingsoonalert = this.comingsoonbuilder.create();
 
 			this.errorbuilder.setNeutralButton("ok",
-					new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int id) {
-							MyView.this.erroralert.dismiss();
-						}
-					});
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int id) {
+						MyView.this.erroralert.dismiss();
+					}
+				});
 			this.erroralert = this.errorbuilder.create();
 
 			this.gameData.getTeam().add(
-					this.createChar("Coaldra", "Coaldra", "hand"));
+				this.createChar("Coaldra", "Coaldra", "hand"));
 			this.gameData.getTeam().get(0).setCurrentLVL(1);
 			this.gameData.getTeam().get(0).setMove(1, Move.INFERNO);
 			// TODO remove this
@@ -584,11 +697,11 @@ public class MainClass extends Activity implements Runnable {
 			this.winHeight = canvas.getHeight() - 60;
 
 			this.myDrawText(canvas, "Texamon", 26, this.winWidth / 2,
-					this.winHeight / 4, Color.RED, 1);
+				this.winHeight / 4, Color.RED, 1);
 
 			if (this.startButton != null) {
 				this.startButton.setX(this.winWidth / 2
-						- this.startButton.getWidth() / 2);
+					- this.startButton.getWidth() / 2);
 				this.startButton.setY(this.winHeight / 2);
 				this.startButton.draw(canvas);
 			}
@@ -600,15 +713,15 @@ public class MainClass extends Activity implements Runnable {
 			canvas.drawColor(Color.BLACK);
 
 			this.myDrawText(canvas, "Game Over", 32, this.winWidth / 2, 100,
-					Color.RED, 1);
+				Color.RED, 1);
 			this.myDrawText(canvas, "Touch the Android to Begin", 16,
-					this.winWidth / 2, 125, Color.GREEN, 1);
+				this.winWidth / 2, 125, Color.GREEN, 1);
 			this.myDrawText(canvas, "Wins: " + "  Losses: ", 16,
-					this.winWidth / 2, 200, Color.RED, 1);
+				this.winWidth / 2, 200, Color.RED, 1);
 
 			if (this.startButton != null) {
 				this.startButton.setX(this.winWidth / 2
-						- this.startButton.getWidth() / 2);
+					- this.startButton.getWidth() / 2);
 				this.startButton.setY(280);
 				this.startButton.draw(canvas);
 			}
@@ -670,7 +783,7 @@ public class MainClass extends Activity implements Runnable {
 			}
 			catch (Exception e) {
 				this.erroralert.setMessage("ERROR OCCURED! error " + e
-						+ "\n at line" + e.getStackTrace()[2].getLineNumber());
+					+ "\n at line" + e.getStackTrace()[2].getLineNumber());
 				this.erroralert.show();
 				e.printStackTrace();
 			}
@@ -678,11 +791,11 @@ public class MainClass extends Activity implements Runnable {
 		}
 
 		private void myDrawText(Canvas canvas, String toDraw, int size,
-				float x, float y, int color, int alignment) {
+			float x, float y, int color, int alignment) {
 			Paint paintText = new Paint(Paint.ANTI_ALIAS_FLAG);
 			paintText.setColor(color);
 			Typeface typeface =
-					Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL);
+				Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL);
 			paintText.setTextSize(size);
 			paintText.setTypeface(typeface); // Sans Serif is the default
 
@@ -698,20 +811,19 @@ public class MainClass extends Activity implements Runnable {
 		public void onAttachedToWindow() {
 			DisplayMetrics metrics = new DisplayMetrics();
 			((Activity) this.thisContext).getWindowManager()
-					.getDefaultDisplay().getMetrics(metrics);
+				.getDefaultDisplay().getMetrics(metrics);
 
 			this.winHeight = metrics.heightPixels;
 			this.winWidth = metrics.widthPixels;
 			this.startButton =
-					new MovableObject("start.png", R.drawable.start,
-							(this.winWidth / 2) - (this.winWidth / 4),
-							(this.winHeight / 2) - (this.winHeight / 16),
-							this.winWidth / 2, this.winHeight / 8,
-							this.getResources());
+				new MovableObject("start.png", R.drawable.start,
+					(this.winWidth / 2) - (this.winWidth / 4),
+					(this.winHeight / 2) - (this.winHeight / 16),
+					this.winWidth / 2, this.winHeight / 8, this.getResources());
 			this.player =
-					new MovableObject("player.png", R.drawable.player,
-							(this.winWidth / 2) - 3, (this.winHeight / 2) - 3,
-							7, 7, this.getResources());
+				new MovableObject("player.png", R.drawable.player,
+					(this.winWidth / 2) - 3, (this.winHeight / 2) - 3, 7, 7,
+					this.getResources());
 		}
 
 		// this method will get called every threadDelay (20) ms
@@ -792,25 +904,22 @@ public class MainClass extends Activity implements Runnable {
 					--this.count;
 				}
 
-				this.mapSource
-						.set((this.gameData.getxPos() - (this.TILES_PER_SCREEN / 2))
-								* this.gameData.getCurrentMap().getTileWidth(),
-								(this.gameData.getyPos() - (this.TILES_PER_SCREEN / 2))
-										* this.gameData.getCurrentMap()
-												.getTileHeight(),
-								(this.gameData.getxPos() + (this.TILES_PER_SCREEN / 2))
-										* this.gameData.getCurrentMap()
-												.getTileWidth(),
-								(this.gameData.getyPos() + (this.TILES_PER_SCREEN / 2))
-										* this.gameData.getCurrentMap()
-												.getTileHeight());
+				this.mapSource.set(
+					(this.gameData.getxPos() - (this.TILES_PER_SCREEN / 2))
+						* this.gameData.getCurrentMap().getTileWidth(),
+					(this.gameData.getyPos() - (this.TILES_PER_SCREEN / 2))
+						* this.gameData.getCurrentMap().getTileHeight(),
+					(this.gameData.getxPos() + (this.TILES_PER_SCREEN / 2))
+						* this.gameData.getCurrentMap().getTileWidth(),
+					(this.gameData.getyPos() + (this.TILES_PER_SCREEN / 2))
+						* this.gameData.getCurrentMap().getTileHeight());
 				this.mapDest.set(0, 0, canvas.getWidth(), canvas.getHeight());
 				canvas.drawBitmap(this.gameData.getCurMapImg(), this.mapSource,
-						this.mapDest, null);
+					this.mapDest, null);
 
 				this.player.draw(canvas, canvas.getWidth()
-						/ this.TILES_PER_SCREEN, canvas.getHeight()
-						/ this.TILES_PER_SCREEN);
+					/ this.TILES_PER_SCREEN, canvas.getHeight()
+					/ this.TILES_PER_SCREEN);
 
 				this.drawMenus(canvas);
 
@@ -821,7 +930,7 @@ public class MainClass extends Activity implements Runnable {
 			}
 			catch (Exception e) {
 				this.erroralert.setMessage("ERROR OCCURED! error " + e
-						+ "\n at line" + e.getStackTrace()[2].getLineNumber());
+					+ "\n at line" + e.getStackTrace()[2].getLineNumber());
 				this.erroralert.show();
 				e.printStackTrace();
 			}
@@ -842,7 +951,7 @@ public class MainClass extends Activity implements Runnable {
 
 			if (this.canvasSizeDirty) {
 				System.err.println("Not handling event because "
-						+ "canvas size is dirty");
+					+ "canvas size is dirty");
 				return false;
 			}
 
@@ -857,45 +966,44 @@ public class MainClass extends Activity implements Runnable {
 				this.startMouseDragY = y;
 
 				switch (this.gameData.getState()) {
-				case INGAME:
-					if (this.wDPadUp.containsPoint(this.CANVAS_WIDTH,
+					case INGAME:
+						if (this.wDPadUp.containsPoint(this.CANVAS_WIDTH,
 							this.CANVAS_HEIGHT, new Point(x, y))) {
-						this.wDPadUp.executeAction();
-					}
-					if (this.wDPadDown.containsPoint(this.CANVAS_WIDTH,
+							this.wDPadUp.executeAction();
+						}
+						if (this.wDPadDown.containsPoint(this.CANVAS_WIDTH,
 							this.CANVAS_HEIGHT, new Point(x, y))) {
-						this.wDPadDown.executeAction();
-					}
-					if (this.wDPadLeft.containsPoint(this.CANVAS_WIDTH,
+							this.wDPadDown.executeAction();
+						}
+						if (this.wDPadLeft.containsPoint(this.CANVAS_WIDTH,
 							this.CANVAS_HEIGHT, new Point(x, y))) {
-						this.wDPadLeft.executeAction();
-					}
-					if (this.wDPadRight.containsPoint(this.CANVAS_WIDTH,
+							this.wDPadLeft.executeAction();
+						}
+						if (this.wDPadRight.containsPoint(this.CANVAS_WIDTH,
 							this.CANVAS_HEIGHT, new Point(x, y))) {
-						this.wDPadRight.executeAction();
-					}
-					if (this.menuButton.isVisible()
+							this.wDPadRight.executeAction();
+						}
+						if (this.menuButton.isVisible()
 							&& this.menuButton.containsPoint(this.CANVAS_WIDTH,
-									this.CANVAS_HEIGHT, new Point(x, y))) {
-						this.menuButton.executeAction();
-					}
-					if (this.wStart.isVisible()
+								this.CANVAS_HEIGHT, new Point(x, y))) {
+							this.menuButton.executeAction();
+						}
+						if (this.wStart.isVisible()
 							&& this.exitButton.containsPoint(this.CANVAS_WIDTH,
-									this.CANVAS_HEIGHT, new Point(x, y))) {
-						this.exitButton.executeAction();
-					}
-					break;
-				case BATTLE:
-					// TODO battle
-				case GAME_OVER:
-					break;
-				case MAIN_MENU:
-					break;
-				default:
-					break;
+								this.CANVAS_HEIGHT, new Point(x, y))) {
+							this.exitButton.executeAction();
+						}
+						break;
+					case BATTLE:
+						// TODO battle
+					case GAME_OVER:
+						break;
+					case MAIN_MENU:
+						break;
+					default:
+						break;
 				}
 				/*
-				 * 
 				 * if (isNear(aurage.getX(),aurage.getY(),(int)x,(int)y)){
 				 * alert.setMessage(aurage.getSignText()); alert.setButton("Ok",
 				 * new DialogInterface.OnClickListener() { public void
@@ -939,56 +1047,56 @@ public class MainClass extends Activity implements Runnable {
 
 				if (this.gameData.isMoveUp()) {
 					if (!this.wDPadUp.containsPoint(this.CANVAS_WIDTH,
-							this.CANVAS_HEIGHT, new Point(x, y))) {
+						this.CANVAS_HEIGHT, new Point(x, y))) {
 						this.wDpadCenter.executeAction();
 					}
 				}
 				else {
 					if (this.wDPadUp.containsPoint(this.CANVAS_WIDTH,
-							this.CANVAS_HEIGHT, new Point(x, y))) {
+						this.CANVAS_HEIGHT, new Point(x, y))) {
 						this.wDPadUp.executeAction();
 					}
 				}
 				if (this.gameData.isMoveDown()) {
 					if (!this.wDPadDown.containsPoint(this.CANVAS_WIDTH,
-							this.CANVAS_HEIGHT, new Point(x, y))) {
+						this.CANVAS_HEIGHT, new Point(x, y))) {
 						this.wDpadCenter.executeAction();
 					}
 				}
 				else {
 					if (this.wDPadDown.containsPoint(this.CANVAS_WIDTH,
-							this.CANVAS_HEIGHT, new Point(x, y))) {
+						this.CANVAS_HEIGHT, new Point(x, y))) {
 						this.wDPadDown.executeAction();
 					}
 				}
 
 				if (this.gameData.isMoveLeft()) {
 					if (!this.wDPadLeft.containsPoint(this.CANVAS_WIDTH,
-							this.CANVAS_HEIGHT, new Point(x, y))) {
+						this.CANVAS_HEIGHT, new Point(x, y))) {
 						this.wDpadCenter.executeAction();
 					}
 				}
 				else {
 					if (this.wDPadLeft.containsPoint(this.CANVAS_WIDTH,
-							this.CANVAS_HEIGHT, new Point(x, y))) {
+						this.CANVAS_HEIGHT, new Point(x, y))) {
 						this.wDPadLeft.executeAction();
 					}
 				}
 				if (this.gameData.isMoveRight()) {
 					if (!this.wDPadRight.containsPoint(this.CANVAS_WIDTH,
-							this.CANVAS_HEIGHT, new Point(x, y))) {
+						this.CANVAS_HEIGHT, new Point(x, y))) {
 						this.wDpadCenter.executeAction();
 					}
 				}
 				else {
 					if (this.wDPadRight.containsPoint(this.CANVAS_WIDTH,
-							this.CANVAS_HEIGHT, new Point(x, y))) {
+						this.CANVAS_HEIGHT, new Point(x, y))) {
 						this.wDPadRight.executeAction();
 					}
 				}
 
 				if (this.wDpadCenter.containsPoint(this.CANVAS_WIDTH,
-						this.CANVAS_HEIGHT, new Point(x, y))) {
+					this.CANVAS_HEIGHT, new Point(x, y))) {
 					this.wDpadCenter.executeAction();
 				}
 
@@ -1031,32 +1139,32 @@ public class MainClass extends Activity implements Runnable {
 
 		public void stringtotexamon(String[] basestring, int pos) {
 			this.gameData.getTeam().set(pos,
-					this.createChar(basestring[20], basestring[20], "hand"));
+				this.createChar(basestring[20], basestring[20], "hand"));
 			this.gameData.getTeam().get(pos)
-					.setCurrentHP(Integer.decode(basestring[0]));
+				.setCurrentHP(Integer.decode(basestring[0]));
 			this.gameData.getTeam().get(pos)
-					.setCurrentLVL(Integer.decode(basestring[2]));
+				.setCurrentLVL(Integer.decode(basestring[2]));
 			this.gameData.getTeam().get(pos).setLocation(basestring[4]);
 			this.gameData.getTeam().get(pos)
-					.setMove(0, Move.fromString(basestring[6]));
+				.setMove(0, Move.fromString(basestring[6]));
 			this.gameData.getTeam().get(pos)
-					.setMove(1, Move.fromString(basestring[8]));
+				.setMove(1, Move.fromString(basestring[8]));
 			this.gameData.getTeam().get(pos)
-					.setMove(2, Move.fromString(basestring[10]));
+				.setMove(2, Move.fromString(basestring[10]));
 			this.gameData.getTeam().get(pos)
-					.setMove(3, Move.fromString(basestring[12]));
+				.setMove(3, Move.fromString(basestring[12]));
 			this.gameData.getTeam().get(pos).setNickName(basestring[14]);
 			this.gameData.getTeam().get(pos)
-					.setUID(Integer.decode(basestring[16]));
+				.setUID(Integer.decode(basestring[16]));
 			this.gameData.getTeam().get(pos)
-					.setXP(Integer.decode(basestring[18]));
+				.setXP(Integer.decode(basestring[18]));
 
 		}
 
 		public boolean teamgone() {
 			for (int i = 0; i < this.gameData.getTeam().getSize(); i++) {
 				if ((this.gameData.getTeam().get(i) != null)
-						&& this.gameData.getTeam().get(i).getCurrentHP() > 0) {
+					&& this.gameData.getTeam().get(i).getCurrentHP() > 0) {
 					return false;
 				}
 			}
@@ -1124,7 +1232,7 @@ public class MainClass extends Activity implements Runnable {
 
 		super.onStop();
 		if (this.doLogging) {
-			Log.i("tag", "onStop is called");
+			Log.i("Texamon.MainClass", "onStop is called");
 		}
 		this.myThread.interrupt();
 		this.myThread = null;
@@ -1165,7 +1273,7 @@ public class MainClass extends Activity implements Runnable {
 
 		}
 		if (this.doLogging) {
-			Log.i("tag", "run is stopping");
+			Log.i("Texamon.MainClass", "run is stopping");
 		}
 
 	}

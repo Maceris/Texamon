@@ -16,6 +16,7 @@
  *******************************************************************************/
 package com.Omega;
 
+import android.util.Log;
 import com.Omega.util.Random;
 
 /**
@@ -113,84 +114,63 @@ public class Battle {
 	public static double getTypeDamage(final Type attacking,
 		final Type defending) {
 		double dam = 1;
+		if (attacking == null) {
+			Log.d("Texamon.Battle", "Attacking type is null",
+				new NullPointerException());
+			return dam;
+		}
+		if (defending == null) {
+			Log.d("Texamon.Battle", "Defending type is null",
+				new NullPointerException());
+			return dam;
+		}
 		if (attacking.equals(Type.WATER)) {
-			if (defending.equals(Type.FIRE)) {
+			if (defending.equals(Type.FIRE) || defending.equals(Type.STONE)) {
 				dam = 2;
 			}
-			else if (defending.equals(Type.PLANT)) {
-				dam = .5;
-			}
-			else if (defending.equals(Type.STONE)) {
-				dam = 2;
-			}
-			else if (defending.equals(Type.GLITCH)) {
+			else if (defending.equals(Type.PLANT)
+				|| defending.equals(Type.GLITCH)) {
 				dam = .5;
 			}
 		}
 		else if (attacking.equals(Type.FIRE)) {
-			if (defending.equals(Type.WATER)) {
-				dam = .5;
-			}
-			else if (defending.equals(Type.PLANT)) {
+			if (defending.equals(Type.PLANT)) {
 				dam = 2;
 			}
-			else if (defending.equals(Type.STONE)) {
-				dam = .5;
-			}
-			else if (defending.equals(Type.GLITCH)) {
+			else if (defending.equals(Type.WATER)
+				|| defending.equals(Type.STONE)
+				|| defending.equals(Type.GLITCH)) {
 				dam = .5;
 			}
 		}
 		else if (attacking.equals(Type.PLANT)) {
-			if (defending.equals(Type.WATER)) {
+			if (defending.equals(Type.WATER) || defending.equals(Type.STONE)) {
 				dam = 2;
 			}
-			else if (defending.equals(Type.FIRE)) {
-				dam = .5;
-			}
-			else if (defending.equals(Type.STONE)) {
-				dam = 2;
-			}
-			else if (defending.equals(Type.GLITCH)) {
+			else if (defending.equals(Type.FIRE)
+				|| defending.equals(Type.GLITCH)) {
 				dam = .5;
 			}
 		}
 		else if (attacking.equals(Type.STONE)) {
-			if (defending.equals(Type.WATER)) {
-				dam = .5;
-			}
-			else if (defending.equals(Type.FIRE)) {
+			if (defending.equals(Type.FIRE)) {
 				dam = 2;
 			}
-			else if (defending.equals(Type.PLANT)) {
-				dam = .5;
-			}
-			else if (defending.equals(Type.GLITCH)) {
+			else if (defending.equals(Type.WATER)
+				|| defending.equals(Type.PLANT)
+				|| defending.equals(Type.GLITCH)) {
 				dam = .5;
 			}
 		}
 		else if (attacking.equals(Type.NORMAL)) {
-			if (defending.equals(Type.STONE)) {
-				dam = .5;
-			}
-			else if (defending.equals(Type.GLITCH)) {
+			if (defending.equals(Type.STONE) || defending.equals(Type.GLITCH)) {
 				dam = .5;
 			}
 		}
 		else if (attacking.equals(Type.GLITCH)) {
-			if (defending.equals(Type.WATER)) {
-				dam = 2;
-			}
-			else if (defending.equals(Type.FIRE)) {
-				dam = 2;
-			}
-			else if (defending.equals(Type.PLANT)) {
-				dam = 2;
-			}
-			else if (defending.equals(Type.STONE)) {
-				dam = 2;
-			}
-			else if (defending.equals(Type.NORMAL)) {
+			if (defending.equals(Type.WATER) || defending.equals(Type.FIRE)
+				|| defending.equals(Type.PLANT) || defending.equals(Type.STONE)
+				|| defending.equals(Type.NORMAL)) {
 				dam = 2;
 			}
 		}

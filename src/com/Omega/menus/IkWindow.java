@@ -16,8 +16,6 @@
  *******************************************************************************/
 package com.Omega.menus;
 
-import java.util.ArrayList;
-
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -26,14 +24,18 @@ import android.graphics.Paint.Join;
 import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.graphics.RectF;
-
+import android.util.Log;
 import com.Omega.Point;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A window on the screen. These can nest and are aligned, sized, and positioned
  * relative to the parent (another window, or the whole canvas for top level
  * windows).
- * 
+ *
  * @author Ches Burks
  *
  */
@@ -42,8 +44,8 @@ public class IkWindow {
 	/**
 	 * The style to use if a window does not have a style specifically set.
 	 */
-	private static WindowStyle defaultStyle = new WindowStyle(
-			WindowStyle.defStyle, WindowStyle.defBorder,
+	private static WindowStyle defaultStyle =
+		new WindowStyle(WindowStyle.defStyle, WindowStyle.defBorder,
 			WindowStyle.defColorScheme);
 
 	/**
@@ -75,9 +77,9 @@ public class IkWindow {
 		else {
 			synchronized (IkWindow.defaultStyle) {
 				clone =
-						new WindowStyle(IkWindow.defaultStyle.style,
-								IkWindow.defaultStyle.border,
-								IkWindow.defaultStyle.colorScheme);
+					new WindowStyle(IkWindow.defaultStyle.style,
+						IkWindow.defaultStyle.border,
+						IkWindow.defaultStyle.colorScheme);
 			}
 		}
 		return clone;
@@ -180,9 +182,17 @@ public class IkWindow {
 	private ArrayList<IkWindow> children;
 
 	/**
-	 * Called when the window is interacted with
+	 * Called when the window is interacted with. Can reference data in the
+	 * windows state object.
 	 */
 	private IWindowCallback callbackFunc;
+
+	/**
+	 * Contains references to outside objects required by the callback function.
+	 */
+	private Map<Object, Object> stateObj;
+
+	private boolean beingDestroyed;
 
 	/**
 	 * Creates a default window and initializes internal variables.
@@ -206,6 +216,7 @@ public class IkWindow {
 		this.borderPaint.setStrokeWidth(4);
 		this.children = new ArrayList<IkWindow>();
 		this.callbackFunc = null;
+		this.beingDestroyed = false;
 		this.dirty();
 	}
 
@@ -222,7 +233,7 @@ public class IkWindow {
 	 *            the parents respective width and height
 	 */
 	public IkWindow(final Point displacement, final Alignment alignment,
-			final Point widthAndHeight) {
+		final Point widthAndHeight) {
 		this();
 		this.localDisplace.set(displacement.x, displacement.y);
 		this.align = alignment;
@@ -254,15 +265,38 @@ public class IkWindow {
 	 * @return true if the window contains the point, otherwise false
 	 */
 	public synchronized boolean containsPoint(int scrWidth, int scrHeight,
-			Point p) {
+		Point p) {
 		RectF actualRect =
-				new RectF(this.getActualDisplaceX() * scrWidth,
-						this.getActualDisplaceY() * scrHeight,
-						(this.getActualDisplaceX() + this.getActualWidth())
-								* scrWidth,
-						(this.getActualDisplaceY() + this.getActualHeight())
-								* scrHeight);
+			new RectF(this.getActualDisplaceX() * scrWidth,
+				this.getActualDisplaceY() * scrHeight,
+				(this.getActualDisplaceX() + this.getActualWidth()) * scrWidth,
+				(this.getActualDisplaceY() + this.getActualHeight())
+					* scrHeight);
 		return actualRect.contains(p.x, p.y);
+	}
+
+	/**
+	 * Destroys self and children, orphans itself, and cleans up references in
+	 * the state object.
+	 */
+	public synchronized void destroy() {
+		if (this.beingDestroyed) { // to prevent cycles
+			return;
+		}
+		this.beingDestroyed = true;
+		for (IkWindow item : this.children) {
+			item.destroy();
+		}
+		this.children.clear();
+
+		this.orphanSelf();
+
+		// clean up references
+		this.stateObj.clear();
+		this.callbackFunc = null;
+		this.stateObj = null;
+
+		this.beingDestroyed = false;
 	}
 
 	/**
@@ -296,11 +330,11 @@ public class IkWindow {
 	}
 
 	/**
-	 * Actually calls/runs the callbacks action method, if this window has one
+	 * Actually calls/runs the callbacks action method, if this window has one.
 	 */
 	public void executeAction() {
 		if (this.callbackFunc != null) {
-			this.callbackFunc.action();
+			this.callbackFunc.action(getStateObject());
 		}
 	}
 
@@ -380,7 +414,7 @@ public class IkWindow {
 		float w = this.getActualWidth();
 		float h = this.getActualHeight();
 		bounds.set((int) (x * c.getWidth()), (int) (y * c.getHeight()),
-				(int) ((x + w) * c.getWidth()), (int) ((y + h) * c.getHeight()));
+			(int) ((x + w) * c.getWidth()), (int) ((y + h) * c.getHeight()));
 		return bounds;
 	}
 
@@ -474,6 +508,18 @@ public class IkWindow {
 	}
 
 	/**
+	 * Returns the state object for this window. This is used to store named
+	 * references to objects that are useful to the window callback. It is left
+	 * generic so any key value pair system may be used, but it is suggested to
+	 * map meaningful strings to object references.
+	 *
+	 * @return the state object for the window, or null if none exists.
+	 */
+	protected synchronized Map<Object, Object> getStateObject() {
+		return this.stateObj;
+	}
+
+	/**
 	 * Returns an actual reference to the current window style. If one does not
 	 * exist, the default style is returned instead. This should not be modified
 	 * without proper thread safety in mind as it could cause unpredictable
@@ -504,9 +550,8 @@ public class IkWindow {
 		else {
 			synchronized (this.currentStyle) {
 				clone =
-						new WindowStyle(this.currentStyle.style,
-								this.currentStyle.border,
-								this.currentStyle.colorScheme);
+					new WindowStyle(this.currentStyle.style,
+						this.currentStyle.border, this.currentStyle.colorScheme);
 			}
 		}
 		return clone;
@@ -530,6 +575,18 @@ public class IkWindow {
 	 */
 	public synchronized boolean hasChild(final IkWindow child) {
 		return this.children.contains(child);
+	}
+
+	/**
+	 * Returns true if there is a state object for this window. That is, if
+	 * {@link #getStateObject()} will return a non-null value. It does not
+	 * ensure that the map is populated.
+	 *
+	 * @return true if there is a state object, false if the state object is
+	 *         null.
+	 */
+	public synchronized boolean hasStateObject() {
+		return this.stateObj != null;
 	}
 
 	/**
@@ -588,11 +645,11 @@ public class IkWindow {
 		this.recalculateLocalDisplaceNW();
 
 		this.realDisplacement.x =
-				this.localDisplaceNW.x * this.getParentRealWidth()
-						+ this.getParentRealDisplaceX();
+			this.localDisplaceNW.x * this.getParentRealWidth()
+				+ this.getParentRealDisplaceX();
 		this.realDisplacement.y =
-				this.localDisplaceNW.y * this.getParentRealHeight()
-						+ this.getParentRealDisplaceY();
+			this.localDisplaceNW.y * this.getParentRealHeight()
+				+ this.getParentRealDisplaceY();
 		this.realScale.y = this.scale.y * this.getParentRealHeight();
 		this.realScale.x = this.scale.x * this.getParentRealWidth();
 
@@ -608,47 +665,47 @@ public class IkWindow {
 		float yDispl;
 
 		switch (this.align) {
-		case CENTER:
-			xDispl = (1 - this.scale.x) / 2;
-			yDispl = (1 - this.scale.y) / 2;
-			break;
-		case EAST:
-			xDispl = 1 - (this.localDisplace.x + this.scale.x);
-			yDispl = (1 - this.scale.y) / 2;
-			break;
-		case NORTH:
-			xDispl = (1 - this.scale.x) / 2;
-			yDispl = this.localDisplace.y;
-			break;
-		case NORTH_EAST:
-			xDispl = 1 - (this.localDisplace.x + this.scale.x);
-			yDispl = this.localDisplace.y;
-			break;
-		case NORTH_WEST:
-			xDispl = this.localDisplace.x;
-			yDispl = this.localDisplace.y;
-			break;
-		case SOUTH:
-			xDispl = (1 - this.scale.x) / 2;
-			yDispl = 1 - (this.localDisplace.y + this.scale.y);
-			break;
-		case SOUTH_EAST:
-			xDispl = 1 - (this.localDisplace.x + this.scale.x);
-			yDispl = 1 - (this.localDisplace.y + this.scale.y);
-			break;
-		case SOUTH_WEST:
-			xDispl = this.localDisplace.x;
-			yDispl = 1 - (this.localDisplace.y + this.scale.y);
-			break;
-		case WEST:
-			xDispl = this.localDisplace.x;
-			yDispl = (1 - this.scale.y) / 2;
-			break;
-		default:
-			// just default to upper left corner
-			xDispl = this.localDisplace.x;
-			yDispl = this.localDisplace.y;
-			break;
+			case CENTER:
+				xDispl = (1 - this.scale.x) / 2;
+				yDispl = (1 - this.scale.y) / 2;
+				break;
+			case EAST:
+				xDispl = 1 - (this.localDisplace.x + this.scale.x);
+				yDispl = (1 - this.scale.y) / 2;
+				break;
+			case NORTH:
+				xDispl = (1 - this.scale.x) / 2;
+				yDispl = this.localDisplace.y;
+				break;
+			case NORTH_EAST:
+				xDispl = 1 - (this.localDisplace.x + this.scale.x);
+				yDispl = this.localDisplace.y;
+				break;
+			case NORTH_WEST:
+				xDispl = this.localDisplace.x;
+				yDispl = this.localDisplace.y;
+				break;
+			case SOUTH:
+				xDispl = (1 - this.scale.x) / 2;
+				yDispl = 1 - (this.localDisplace.y + this.scale.y);
+				break;
+			case SOUTH_EAST:
+				xDispl = 1 - (this.localDisplace.x + this.scale.x);
+				yDispl = 1 - (this.localDisplace.y + this.scale.y);
+				break;
+			case SOUTH_WEST:
+				xDispl = this.localDisplace.x;
+				yDispl = 1 - (this.localDisplace.y + this.scale.y);
+				break;
+			case WEST:
+				xDispl = this.localDisplace.x;
+				yDispl = (1 - this.scale.y) / 2;
+				break;
+			default:
+				// just default to upper left corner
+				xDispl = this.localDisplace.x;
+				yDispl = this.localDisplace.y;
+				break;
 		}
 
 		this.localDisplaceNW.set(xDispl, yDispl);
@@ -739,6 +796,47 @@ public class IkWindow {
 			this.parent.addChild(this);
 		}
 		this.dirty();
+	}
+
+	/**
+	 * Sets the state object to the supplied one. This copies values from the
+	 * passed map into a new internal map that will have the same type as the
+	 * passed one if possible, defaulting to a {@link HashMap}, to allow for
+	 * different map types if desired.
+	 *
+	 * If there is an existing state object, it is cleared and replaced with the
+	 * new one.
+	 * 
+	 * If you pass a null, this will simply remove the state object.
+	 *
+	 * @param newStateObject the new state object to use for this window.
+	 */
+	@SuppressWarnings("unchecked")
+	public synchronized void setStateObject(
+		final Map<Object, Object> newStateObject) {
+		if (this.stateObj != null) {
+			this.stateObj.clear();
+			this.stateObj = null;
+		}
+		if (newStateObject == null) {
+			this.stateObj = null;
+			return;
+		}
+		try {
+			this.stateObj = newStateObject.getClass().newInstance();
+		}
+		catch (InstantiationException e) {
+			Log.w("Texamon.IkWindow", e);
+		}
+		catch (IllegalAccessException e) {
+			Log.w("Texamon.IkWindow", e);
+		}
+
+		if (this.stateObj == null) { // fall through case
+			this.stateObj = new HashMap<Object, Object>();
+		}
+
+		this.stateObj.putAll(newStateObject);
 	}
 
 	/**

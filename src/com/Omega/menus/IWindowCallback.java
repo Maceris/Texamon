@@ -16,6 +16,8 @@
  *******************************************************************************/
 package com.Omega.menus;
 
+import java.util.Map;
+
 /**
  * Essentially a callback function for menus.
  *
@@ -25,6 +27,9 @@ package com.Omega.menus;
 public interface IWindowCallback {
 	/**
 	 * Actually does whatever the menu should do
+	 * 
+	 * @param stateObj Contains references the action can see or modify.
+	 * 
 	 */
-	public void action();
+	public void action(Map<Object, Object> stateObj);
 }

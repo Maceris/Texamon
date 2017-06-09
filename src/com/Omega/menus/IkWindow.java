@@ -28,8 +28,6 @@ import android.util.Log;
 import com.Omega.Point;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A window on the screen. These can nest and are aligned, sized, and positioned
@@ -182,17 +180,11 @@ public class IkWindow {
 	private ArrayList<IkWindow> children;
 
 	/**
-	 * Called when the window is interacted with. Can reference data in the
-	 * windows state object.
+	 * True if when a touch hits this window, that touch stops there and doesn't
+	 * affect lower windows. False if touches can go through this window and
+	 * affect lower windows.
 	 */
-	private IWindowCallback callbackFunc;
-
-	/**
-	 * Contains references to outside objects required by the callback function.
-	 */
-	private Map<Object, Object> stateObj;
-
-	private boolean beingDestroyed;
+	private boolean consumeTouches;
 
 	/**
 	 * Creates a default window and initializes internal variables.
@@ -215,8 +207,7 @@ public class IkWindow {
 		this.borderPaint.setStrokeJoin(Join.MITER);
 		this.borderPaint.setStrokeWidth(4);
 		this.children = new ArrayList<IkWindow>();
-		this.callbackFunc = null;
-		this.beingDestroyed = false;
+		this.consumeTouches = true;
 		this.dirty();
 	}
 
@@ -248,11 +239,36 @@ public class IkWindow {
 	 * @param item the child to add to the window
 	 */
 	public synchronized void addChild(IkWindow item) {
+		if (item == null) {
+			throw new NullPointerException();
+		}
 		this.children.add(item);
 		if (item.parent != this) {
 			item.setParent(this);
 		}
+
+		item.updateHeights();
 		this.dirty();
+	}
+
+	/**
+	 * True if this window absorbs touches and stops them from reaching lower
+	 * windows, false if touch events can reach lower windows. Defaults to true.
+	 *
+	 * <p>
+	 * This value only affects whether or not this window blocks touches. This
+	 * means windows are allowed to absorb touches and do nothing, or not absorb
+	 * touches and perform an action while allowing lower windows to be
+	 * interacted with by the same touch event.
+	 * </p>
+	 *
+	 * @return true if touch events should stop when they touch this window,
+	 *         false if they can pass through and potentially affect lower
+	 *         windows.
+	 * @see #setConsumeTouches(boolean)
+	 */
+	public synchronized boolean consumesTouches() {
+		return this.consumeTouches;
 	}
 
 	/**
@@ -264,8 +280,8 @@ public class IkWindow {
 	 * @param p the point to check for
 	 * @return true if the window contains the point, otherwise false
 	 */
-	public synchronized boolean containsPoint(int scrWidth, int scrHeight,
-		Point p) {
+	public synchronized boolean containsPoint(final int scrWidth,
+		final int scrHeight, final Point p) {
 		RectF actualRect =
 			new RectF(this.getActualDisplaceX() * scrWidth,
 				this.getActualDisplaceY() * scrHeight,
@@ -276,27 +292,11 @@ public class IkWindow {
 	}
 
 	/**
-	 * Destroys self and children, orphans itself, and cleans up references in
-	 * the state object.
+	 * Package level method that allows the manager to clean up references to
+	 * this window.
 	 */
-	public synchronized void destroy() {
-		if (this.beingDestroyed) { // to prevent cycles
-			return;
-		}
-		this.beingDestroyed = true;
-		for (IkWindow item : this.children) {
-			item.destroy();
-		}
-		this.children.clear();
-
-		this.orphanSelf();
-
-		// clean up references
-		this.stateObj.clear();
-		this.callbackFunc = null;
-		this.stateObj = null;
-
-		this.beingDestroyed = false;
+	synchronized void delete() {
+		// TODO finish this?
 	}
 
 	/**
@@ -320,21 +320,12 @@ public class IkWindow {
 		if (this.dirty) {
 			this.recalculate();
 		}
-		if (!this.visible) {
+		if (!this.isVisible()) {
 			return;
 		}
 		WindowDrawer.drawWindow(c, this, this.getStyle());
 		for (IkWindow item : this.children) {
 			item.draw(c);
-		}
-	}
-
-	/**
-	 * Actually calls/runs the callbacks action method, if this window has one.
-	 */
-	public void executeAction() {
-		if (this.callbackFunc != null) {
-			this.callbackFunc.action(getStateObject());
 		}
 	}
 
@@ -508,18 +499,6 @@ public class IkWindow {
 	}
 
 	/**
-	 * Returns the state object for this window. This is used to store named
-	 * references to objects that are useful to the window callback. It is left
-	 * generic so any key value pair system may be used, but it is suggested to
-	 * map meaningful strings to object references.
-	 *
-	 * @return the state object for the window, or null if none exists.
-	 */
-	protected synchronized Map<Object, Object> getStateObject() {
-		return this.stateObj;
-	}
-
-	/**
 	 * Returns an actual reference to the current window style. If one does not
 	 * exist, the default style is returned instead. This should not be modified
 	 * without proper thread safety in mind as it could cause unpredictable
@@ -558,16 +537,6 @@ public class IkWindow {
 	}
 
 	/**
-	 * Returns true if this window has a callback function (that is, the
-	 * callback object is not null)
-	 *
-	 * @return true if this window has a callback method assigned
-	 */
-	public boolean hasCallback() {
-		return this.callbackFunc != null;
-	}
-
-	/**
 	 * Returns true if this window has the given child as one of its children
 	 *
 	 * @param child the child to look for
@@ -575,18 +544,6 @@ public class IkWindow {
 	 */
 	public synchronized boolean hasChild(final IkWindow child) {
 		return this.children.contains(child);
-	}
-
-	/**
-	 * Returns true if there is a state object for this window. That is, if
-	 * {@link #getStateObject()} will return a non-null value. It does not
-	 * ensure that the map is populated.
-	 *
-	 * @return true if there is a state object, false if the state object is
-	 *         null.
-	 */
-	public synchronized boolean hasStateObject() {
-		return this.stateObj != null;
 	}
 
 	/**
@@ -605,6 +562,11 @@ public class IkWindow {
 	 * @return true if this window is visible
 	 */
 	public synchronized boolean isVisible() {
+		if (this.parent != null) {
+			if (!this.parent.isVisible()) {
+				return false;
+			}
+		}
 		return this.visible;
 	}
 
@@ -625,6 +587,10 @@ public class IkWindow {
 		this.parent = null;// so this does not recurse until crashing
 		if (win != null) {
 			win.removeChild(this);
+		}
+		WindowManager.setHeight(this, WindowManager.BASE_HEIGHT);
+		for (IkWindow child : this.children) {
+			child.updateHeights();
 		}
 	}
 
@@ -739,14 +705,24 @@ public class IkWindow {
 	}
 
 	/**
-	 * Gives this window a callback method. This has a method that performs some
-	 * action when {@link #executeAction()} is called. Setting a null callback
-	 * will essentially remove the callback from the window.
+	 * Sets this windows behavior with respect to touches. If set to true,
+	 * touches that reach this window stop and don't affect lower windows. If
+	 * set to true, touches go through this window and can reach lower windows.
 	 *
-	 * @param callback the method to execute when this window is interacted with
+	 * <p>
+	 * This value only affects whether or not this window blocks touches. This
+	 * means windows are allowed to absorb touches and do nothing, or not absorb
+	 * touches and perform an action while allowing lower windows to be
+	 * interacted with by the same touch event.
+	 * </p>
+	 *
+	 * @param absorbTouches true if touch events should stop when they touch
+	 *            this window, false if they can pass through and potentially
+	 *            affect lower windows.
+	 * @see #consumeTouches
 	 */
-	public void setCallback(IWindowCallback callback) {
-		this.callbackFunc = callback;
+	public synchronized void setConsumeTouches(final boolean absorbTouches) {
+		this.consumeTouches = absorbTouches;
 	}
 
 	/**
@@ -799,47 +775,6 @@ public class IkWindow {
 	}
 
 	/**
-	 * Sets the state object to the supplied one. This copies values from the
-	 * passed map into a new internal map that will have the same type as the
-	 * passed one if possible, defaulting to a {@link HashMap}, to allow for
-	 * different map types if desired.
-	 *
-	 * If there is an existing state object, it is cleared and replaced with the
-	 * new one.
-	 * 
-	 * If you pass a null, this will simply remove the state object.
-	 *
-	 * @param newStateObject the new state object to use for this window.
-	 */
-	@SuppressWarnings("unchecked")
-	public synchronized void setStateObject(
-		final Map<Object, Object> newStateObject) {
-		if (this.stateObj != null) {
-			this.stateObj.clear();
-			this.stateObj = null;
-		}
-		if (newStateObject == null) {
-			this.stateObj = null;
-			return;
-		}
-		try {
-			this.stateObj = newStateObject.getClass().newInstance();
-		}
-		catch (InstantiationException e) {
-			Log.w("Texamon.IkWindow", e);
-		}
-		catch (IllegalAccessException e) {
-			Log.w("Texamon.IkWindow", e);
-		}
-
-		if (this.stateObj == null) { // fall through case
-			this.stateObj = new HashMap<Object, Object>();
-		}
-
-		this.stateObj.putAll(newStateObject);
-	}
-
-	/**
 	 * Sets the windows current style, overriding the default style
 	 *
 	 * @param newStyle the new style to set
@@ -856,6 +791,31 @@ public class IkWindow {
 	 */
 	public synchronized void setVisible(final boolean isVisible) {
 		this.visible = isVisible;
+	}
+
+	/**
+	 * Updates the heights of the window to 1 above the parent, recursively to
+	 * all children.
+	 */
+	protected void updateHeights() {
+		if (this.parent == null) {
+			Log.w("Texamon.IkWindow",
+				"Trying to update height of child of null",
+				new NullPointerException());
+			return;
+		}
+		int parentHeight = WindowManager.getHeight(this.parent);
+		if (parentHeight == WindowManager.ERROR_HEIGHT) {
+			Log.w("Texamon.IkWindow",
+				"Adding a child to a window without a height",
+				new RuntimeException());
+			parentHeight = WindowManager.BASE_HEIGHT;
+		}
+		WindowManager.setHeight(this, parentHeight + 1);
+
+		for (IkWindow child : this.children) {
+			child.updateHeights();
+		}
 	}
 
 }

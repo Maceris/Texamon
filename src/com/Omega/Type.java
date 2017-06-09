@@ -19,7 +19,7 @@ package com.Omega;
 /**
  * The type of a Texamon, defining what moves it can learn, what moves it is
  * effective or weak against, and what moves it gets bonus damage for using.
- * 
+ *
  * @author Ches Burks
  *
  */
@@ -58,7 +58,7 @@ public enum Type {
 
 	/**
 	 * Returns a reasonable human readable name for the type.
-	 * 
+	 *
 	 * @return The type name.
 	 */
 	public String getName() {

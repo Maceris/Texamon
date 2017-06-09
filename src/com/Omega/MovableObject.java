@@ -16,14 +16,14 @@
  *******************************************************************************/
 package com.Omega;
 
-import java.util.ArrayList;
-
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Rect;
+
+import java.util.ArrayList;
 
 public class MovableObject {
 	// direction to move
@@ -74,7 +74,7 @@ public class MovableObject {
 	 * @param res the resource to use
 	 */
 	public MovableObject(String filename, int drawableId, float x, float y,
-			float objWidth, float objHeight, Resources res) {
+		float objWidth, float objHeight, Resources res) {
 		this.direction = 0; // Location.NORTH;
 		this.theSpeed = 3;
 		this.x1 = x;
@@ -92,8 +92,8 @@ public class MovableObject {
 		this.setCurrentFilename(filename);
 		if (this.currentImage != null) {
 			this.currentImage =
-					Bitmap.createScaledBitmap(this.currentImage,
-							(int) objWidth, (int) objHeight, true);
+				Bitmap.createScaledBitmap(this.currentImage, (int) objWidth,
+					(int) objHeight, true);
 		}
 	}
 
@@ -118,9 +118,9 @@ public class MovableObject {
 	public void draw(Canvas g, int width, int height) {
 		// change me back
 		if (this.currentImage != null) {
-			g.drawBitmap(this.currentImage, new Rect(0, 0, (int) mWidth,
-					(int) mHeight), new Rect((int) this.x1, (int) this.y1,
-					(int) this.x1 + width, (int) this.y1 + height), null);
+			g.drawBitmap(this.currentImage, new Rect(0, 0, (int) this.mWidth,
+				(int) this.mHeight), new Rect((int) this.x1, (int) this.y1,
+				(int) this.x1 + width, (int) this.y1 + height), null);
 		}
 	}
 
@@ -130,9 +130,9 @@ public class MovableObject {
 			Matrix mat = new Matrix();
 			mat.postRotate(this.direction + 90);
 			Bitmap bMapRotate =
-					Bitmap.createBitmap(this.currentImage, 0, 0,
-							this.currentImage.getWidth(),
-							this.currentImage.getHeight(), mat, true);
+				Bitmap.createBitmap(this.currentImage, 0, 0,
+					this.currentImage.getWidth(),
+					this.currentImage.getHeight(), mat, true);
 
 			g.drawBitmap(bMapRotate, this.x1, this.y1, null);
 		}
@@ -197,7 +197,7 @@ public class MovableObject {
 
 	public Rectangle getRect() {
 		return new Rectangle(this.getX(), this.getY(), this.getWidth(),
-				this.getHeight());
+			this.getHeight());
 	}
 
 	private Resources getResources() {
@@ -340,15 +340,15 @@ public class MovableObject {
 
 	private void setImage() {
 		if (this.getCurrentFilename() != null
-				&& !this.getCurrentFilename().equals("")) {
+			&& !this.getCurrentFilename().equals("")) {
 			try {
 				// change me back
 				this.currentImage =
-						BitmapFactory.decodeResource(this.getResources(),
-								this.currentDrawableId);
+					BitmapFactory.decodeResource(this.getResources(),
+						this.currentDrawableId);
 				this.currentImage =
-						Bitmap.createScaledBitmap(this.currentImage,
-								(int) this.mWidth, (int) this.mHeight, false);
+					Bitmap.createScaledBitmap(this.currentImage,
+						(int) this.mWidth, (int) this.mHeight, false);
 
 				// System.out.println("toolkit ok");
 			}
@@ -373,11 +373,11 @@ public class MovableObject {
 			try {
 				// change me back
 				Bitmap pic =
-						BitmapFactory.decodeResource(this.getResources(),
-								this.currentDrawableId);
+					BitmapFactory.decodeResource(this.getResources(),
+						this.currentDrawableId);
 				pic =
-						Bitmap.createScaledBitmap(pic, (int) this.mWidth,
-								(int) this.mHeight, false);
+					Bitmap.createScaledBitmap(pic, (int) this.mWidth,
+						(int) this.mHeight, false);
 				this.imageList.add(pic);
 			}
 			catch (Exception e) {

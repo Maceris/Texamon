@@ -18,7 +18,7 @@ package com.Omega;
 
 /**
  * The current state of a game.
- * 
+ *
  * @author Ches Burks
  *
  */

@@ -20,25 +20,26 @@ import com.Omega.util.SaveUtil;
 
 /**
  * A monster in game, with level, moves, HP etc.
- * 
+ *
  * @author Ches Burks
  *
  */
 public class Monster implements Saveable {
-	private TexamonType theType;
-	private int xp;
-
 	/**
 	 * The maximum number of moves a monster may have ( {@value} )
 	 */
 	public static final int MAX_MOVES = 4;
-
 	/**
 	 * The maximum level that a monster may attain ( {@value} )
 	 */
 	public static final int MAX_LEVEL = 100;
 
+	private TexamonType theType;
+
+	private int xp;
+
 	private Move[] moves;
+	private int[] movePPs;
 
 	private String nickname;
 	private String location;
@@ -48,7 +49,7 @@ public class Monster implements Saveable {
 
 	/**
 	 * Constructs a new monster of the given type
-	 * 
+	 *
 	 * @param type the species of monster
 	 */
 	public Monster(TexamonType type) {
@@ -81,7 +82,7 @@ public class Monster implements Saveable {
 
 	/**
 	 * Returns the monster's current hit points
-	 * 
+	 *
 	 * @return the HP of the monster
 	 */
 	public int getCurrentHP() {
@@ -90,7 +91,7 @@ public class Monster implements Saveable {
 
 	/**
 	 * Returns the monster's current level
-	 * 
+	 *
 	 * @return the level of the monster
 	 */
 	public int getCurrentLVL() {
@@ -99,7 +100,7 @@ public class Monster implements Saveable {
 
 	/**
 	 * Returns the location of the monster.
-	 * 
+	 *
 	 * @return the monster's location
 	 */
 	public String getLocation() {
@@ -108,7 +109,7 @@ public class Monster implements Saveable {
 
 	/**
 	 * Returns the attack of the monster modified by the level.
-	 * 
+	 *
 	 * @return the base attack for this monster
 	 */
 	public int getMaxATK() {
@@ -117,7 +118,7 @@ public class Monster implements Saveable {
 
 	/**
 	 * Returns the defense of the monster modified by the level.
-	 * 
+	 *
 	 * @return the base defense for this monster
 	 */
 	public int getMaxDEF() {
@@ -126,7 +127,7 @@ public class Monster implements Saveable {
 
 	/**
 	 * Returns the HP for this monster modified by the level.
-	 * 
+	 *
 	 * @return the base HP for this monster
 	 */
 	public int getMaxHP() {
@@ -135,7 +136,7 @@ public class Monster implements Saveable {
 
 	/**
 	 * Returns the speed for this monster modified by the level.
-	 * 
+	 *
 	 * @return the base speed for this monster
 	 */
 	public int getMaxSPD() {
@@ -145,7 +146,7 @@ public class Monster implements Saveable {
 	/**
 	 * Returns the move at the specified index. This should be between 0 and
 	 * {@link Monster#MAX_MOVES}
-	 * 
+	 *
 	 * @param index the index of the move
 	 * @return the move at that index, or null if there is not one there
 	 */
@@ -155,7 +156,7 @@ public class Monster implements Saveable {
 
 	/**
 	 * Returns this monster's nickname.
-	 * 
+	 *
 	 * @return the nickname of this monster
 	 */
 	public String getNickName() {
@@ -165,7 +166,7 @@ public class Monster implements Saveable {
 	/**
 	 * Returns the percent of the way the monster is to leveling, as an int from
 	 * 0 to 100 inclusive.
-	 * 
+	 *
 	 * @return the percent of the way from the current level to the next
 	 */
 	public int getPercentXP() {
@@ -175,7 +176,7 @@ public class Monster implements Saveable {
 
 	/**
 	 * Returns the {@link TexamonType species} of this monster.
-	 * 
+	 *
 	 * @return the type of the monster
 	 */
 	public TexamonType getSpecies() {
@@ -185,7 +186,7 @@ public class Monster implements Saveable {
 	/**
 	 * Returns the unique ID of this monster. By definition this should be
 	 * unique to the monster.
-	 * 
+	 *
 	 * @return the UID of the monster
 	 */
 	public int getUID() {
@@ -194,7 +195,7 @@ public class Monster implements Saveable {
 
 	/**
 	 * Returns the monster's current experience points.
-	 * 
+	 *
 	 * @return the current XP of the monster
 	 */
 	public int getXP() {
@@ -204,7 +205,7 @@ public class Monster implements Saveable {
 	/**
 	 * Sets the health of the monster to the specified value. This is not
 	 * checked for bounds.
-	 * 
+	 *
 	 * @param health the new health of the monster
 	 */
 	public void setCurrentHP(int health) {
@@ -215,14 +216,14 @@ public class Monster implements Saveable {
 	 * Sets the current level of the monster to the specified value. If not
 	 * between 0 and {@link Monster#MAX_LEVEL} it does not actually set the
 	 * value.
-	 * 
+	 *
 	 * @param level the new level of the monster
 	 */
 	public void setCurrentLVL(int level) {
 		if (level < 0) {
 			return;
 		}
-		if (level > MAX_LEVEL) {
+		if (level > Monster.MAX_LEVEL) {
 			return;
 		}
 		this.currentLVL = level;
@@ -230,7 +231,7 @@ public class Monster implements Saveable {
 
 	/**
 	 * Sets the current location of the monster.
-	 * 
+	 *
 	 * @param loc the new location
 	 */
 	public void setLocation(String loc) {
@@ -241,7 +242,7 @@ public class Monster implements Saveable {
 	 * Sets the move at the given index to the given move. If the index is
 	 * invalid or the monster cannot learn that move, it returns false. If the
 	 * move was set, returns true.
-	 * 
+	 *
 	 * @param index the index of the move
 	 * @param move the move to learn
 	 * @return true on success, false if there was a problem and it was not set
@@ -260,7 +261,7 @@ public class Monster implements Saveable {
 
 	/**
 	 * Sets the current nickname of the monster.
-	 * 
+	 *
 	 * @param nick the new nickname
 	 */
 	public void setNickName(String nick) {
@@ -270,7 +271,7 @@ public class Monster implements Saveable {
 	/**
 	 * Sets the current type of the monster to the given one. This changes the
 	 * species so really it shouldn't ever be used.
-	 * 
+	 *
 	 * @param species the new species of the monster
 	 */
 	public void setSpecies(TexamonType species) {
@@ -280,7 +281,7 @@ public class Monster implements Saveable {
 	/**
 	 * Sets the unique ID value of the monster. No checking takes place so it is
 	 * up to the caller to ensure the number is actually unique to this monster.
-	 * 
+	 *
 	 * @param number the new UID of this monster
 	 */
 	public void setUID(int number) {
@@ -290,7 +291,7 @@ public class Monster implements Saveable {
 	/**
 	 * Sets the experience points of the monster. No value checking takes place,
 	 * and the monster will not automatically level up.
-	 * 
+	 *
 	 * @param newXP the new XP value
 	 */
 	public void setXP(int newXP) {

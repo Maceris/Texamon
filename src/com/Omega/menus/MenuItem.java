@@ -69,7 +69,7 @@ public class MenuItem extends IkWindow {
 		if (this.dirty2) {
 			this.recalculateTextSize(c);
 		}
-		if (!this.visible) {
+		if (!this.isVisible()) {
 			return;
 		}
 		c.drawText(
@@ -134,6 +134,7 @@ public class MenuItem extends IkWindow {
 		}
 
 		this.parent = newParent;
+		updateHeights();
 		this.dirty();
 	}
 

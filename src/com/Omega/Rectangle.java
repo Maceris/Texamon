@@ -62,7 +62,7 @@ public class Rectangle {
 
 	public boolean isInsideOf(float x, float y, Rectangle other) {
 		if (x >= other.xPos && x <= other.xPos + other.w && y >= other.yPos
-				&& y <= other.yPos + other.h) {
+			&& y <= other.yPos + other.h) {
 			return true;
 		}
 		return false;

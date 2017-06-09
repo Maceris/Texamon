@@ -17,16 +17,20 @@
 package com.Omega.menus;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
- * Essentially a callback function for menus.
+ * Essentially a callback function for menus. This is an unfortunate result of
+ * not having method references in the current version of android, which would
+ * help organize and clean up code.
  *
  * @author Ches Burks
  *
  */
 public interface IWindowCallback {
 	/**
-	 * Actually does whatever the menu should do
+	 * Actually does whatever the menu should do. Should be replaced by
+	 * {@link Consumer} if possible at some point.
 	 * 
 	 * @param stateObj Contains references the action can see or modify.
 	 * 

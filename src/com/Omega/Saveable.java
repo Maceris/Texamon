@@ -43,7 +43,7 @@ public interface Saveable {
 
 	/**
 	 * Creates an object based on the given text.
-	 * 
+	 *
 	 * @param text The text to convert from.
 	 */
 	public void fromText(final String text);

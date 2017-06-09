@@ -18,7 +18,7 @@ package com.Omega;
 
 /**
  * Moves that can be learned and used by monsters.
- * 
+ *
  * @author Ches Burks
  *
  */
@@ -77,7 +77,7 @@ public enum Move {
 	LEAF_SLASH("Leaf Slash", "", Type.PLANT, 5, 150, 90),
 	/**
 	 * Life Drain
-	 * 
+	 *
 	 */
 	LIFE_DRAIN("Life Drain", "", Type.PLANT, 15, 35, 100),
 	/**
@@ -135,7 +135,7 @@ public enum Move {
 
 	/**
 	 * Gets the move corresponding to given move name. Case is ignored.
-	 * 
+	 *
 	 * @param text the move name
 	 * @return the move with that name, or null if no move is found
 	 */
@@ -159,7 +159,7 @@ public enum Move {
 	private Type moveType;
 
 	private Move(String name, String descr, Type type, int pp, int power,
-			int acc) {
+		int acc) {
 		this.moveName = name;
 		this.moveDescr = descr;
 		this.moveType = type;
@@ -170,7 +170,7 @@ public enum Move {
 
 	/**
 	 * Returns the base accuracy of this move
-	 * 
+	 *
 	 * @return the accuracy
 	 */
 	public int getAcc() {
@@ -179,7 +179,7 @@ public enum Move {
 
 	/**
 	 * Returns the plain description of this move
-	 * 
+	 *
 	 * @return the description
 	 */
 	public String getDescr() {
@@ -188,7 +188,7 @@ public enum Move {
 
 	/**
 	 * Returns the plain name of the move
-	 * 
+	 *
 	 * @return the name
 	 */
 	public String getName() {
@@ -197,7 +197,7 @@ public enum Move {
 
 	/**
 	 * Returns the base power of the move
-	 * 
+	 *
 	 * @return the power
 	 */
 	public int getPower() {
@@ -206,7 +206,7 @@ public enum Move {
 
 	/**
 	 * Returns the base Power Points of the move
-	 * 
+	 *
 	 * @return the PP
 	 */
 	public int getPP() {
@@ -215,7 +215,7 @@ public enum Move {
 
 	/**
 	 * Returns the {@link Type type} of the move
-	 * 
+	 *
 	 * @return the type
 	 */
 	public Type getType() {

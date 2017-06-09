@@ -50,6 +50,7 @@ public class Menu extends IkWindow {
 		this.scale.set(1.0f, 1.0f);
 		this.localDisplace.set(0.0f, 0.0f);
 		this.align = Alignment.NORTH_WEST;
+		this.setConsumeTouches(false);
 		this.dirty();
 	}
 
@@ -70,6 +71,7 @@ public class Menu extends IkWindow {
 		}
 		this.items.add((MenuItem) item);
 		item.setParent(this);
+		item.updateHeights();
 		this.dirty();
 	}
 
@@ -88,7 +90,7 @@ public class Menu extends IkWindow {
 		if (this.dirty) {
 			this.recalculate();
 		}
-		if (!this.visible) {
+		if (!this.isVisible()) {
 			return;
 		}
 		for (IkWindow item : this.items) {

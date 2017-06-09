@@ -17,9 +17,9 @@
 package com.Omega;
 
 /**
- * 
+ *
  * A 2d point with float values
- * 
+ *
  * @author Ches Burks
  *
  */
@@ -43,7 +43,7 @@ public class Point {
 
 	/**
 	 * Constructs a new Point with given initial values
-	 * 
+	 *
 	 * @param x2 the initial x value
 	 * @param y2 the initial y value
 	 */
@@ -54,7 +54,7 @@ public class Point {
 
 	/**
 	 * Sets the x and y values
-	 * 
+	 *
 	 * @param x2 the new x value
 	 * @param y2 the new y value
 	 */

@@ -16,12 +16,12 @@
  *******************************************************************************/
 package com.Omega;
 
-import java.util.ArrayList;
-
-import tiled.core.Map;
-import tiled.core.TileLayer;
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
+import tiled.core.Map;
+import tiled.core.TileLayer;
+
+import java.util.ArrayList;
 
 /**
  * Information about the current game
@@ -41,7 +41,7 @@ public class GameData {
 
 	private String playerName;
 	private GameState state;
-	private ArrayList<?> gymsBeaten;
+	private ArrayList<?> gymsBeaten;// int using bit flags?
 	private int xPos;
 	private int yPos;
 	private Map currentMap;
@@ -356,22 +356,22 @@ public class GameData {
 		int newx = this.xPos;
 		int newy = this.yPos;
 		switch (this.movement) {
-		case DOWN:
-			++newy;
-			break;
-		case LEFT:
-			--newx;
-			break;
-		case NONE:
-			return false;
-		case RIGHT:
-			++newx;
-			break;
-		case UP:
-			--newy;
-			break;
-		default:
-			return false;
+			case DOWN:
+				++newy;
+				break;
+			case LEFT:
+				--newx;
+				break;
+			case NONE:
+				return false;
+			case RIGHT:
+				++newx;
+				break;
+			case UP:
+				--newy;
+				break;
+			default:
+				return false;
 		}
 		if (this.currentMap.getLayerCount() >= 8) {
 			if (((TileLayer) this.currentMap.getLayer(1)).getTileAt(newx, newy) != null) {

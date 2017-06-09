@@ -20,45 +20,38 @@ public enum TexamonType {
 
 	// TODO localize this stuff
 	AQWHIRL("Aqwhirl", "A hypnotic turtle that lives in creeks and ponds.",
-			MoveSet.WATER, TexamonType.def(Move.BOIL), Type.WATER, 90, 85, 95,
-			70),
-	BIRDERP(
-			"Birderp",
-			"An annoying bird that flocks wherever people go, begging for food.",
-			MoveSet.NORMAL, TexamonType.def(Move.STOMP), Type.NORMAL, 40, 5,
-			35, 55),
+		MoveSet.WATER, TexamonType.def(Move.BOIL), Type.WATER, 90, 85, 95, 70),
+	BIRDERP("Birderp",
+		"An annoying bird that flocks wherever people go, begging for food.",
+		MoveSet.NORMAL, TexamonType.def(Move.STOMP), Type.NORMAL, 40, 5, 35, 55),
 	BOLROCK("Bolrock",
-			"A stone-like creature that disguises itself as a boulder.",
-			MoveSet.STONE, TexamonType.def(Move.ROCK_TOSS), Type.STONE, 85,
-			135, 130, 25),
+		"A stone-like creature that disguises itself as a boulder.",
+		MoveSet.STONE, TexamonType.def(Move.ROCK_TOSS), Type.STONE, 85, 135,
+		130, 25),
 	C("C", "A glitch in the matrix (trilogy).", new Move[] {Move.M},
-			TexamonType.def(Move.M), Type.GLITCH, 178, 90, 90, 90),
+		TexamonType.def(Move.M), Type.GLITCH, 178, 90, 90, 90),
 	COALDRA("Coaldra",
-			"A small dragon which enjoys roasting food with its fiery breath.",
-			MoveSet.FIRE, TexamonType.def(Move.MELT), Type.FIRE, 110, 123, 65,
-			65),
-	MAGMUK(
-			"Magmuk",
-			"A vicious (and viscous) blob of living lava that lives in volcanoes.",
-			MoveSet.FIRE, TexamonType.def(Move.MELT), Type.FIRE, 105, 105, 120,
-			50),
+		"A small dragon which enjoys roasting food with its fiery breath.",
+		MoveSet.FIRE, TexamonType.def(Move.MELT), Type.FIRE, 110, 123, 65, 65),
+	MAGMUK("Magmuk",
+		"A vicious (and viscous) blob of living lava that lives in volcanoes.",
+		MoveSet.FIRE, TexamonType.def(Move.MELT), Type.FIRE, 105, 105, 120, 50),
 	PLOGGY("Ploggy", "A small frog with a flower on its back.", MoveSet.PLANT,
-			TexamonType.def(Move.ENTANGLE), Type.PLANT, 75, 75, 95, 113),
+		TexamonType.def(Move.ENTANGLE), Type.PLANT, 75, 75, 95, 113),
 	ROXER("Roxer", "A boxing stone-type with strong stone fists.",
-			MoveSet.STONE, TexamonType.def(Move.ROCK_TOSS), Type.STONE, 55, 95,
-			115, 35),
+		MoveSet.STONE, TexamonType.def(Move.ROCK_TOSS), Type.STONE, 55, 95,
+		115, 35),
 	SUNFLO("Sunflo",
-			"A flower that attacks predators with its long sharp leaves.",
-			MoveSet.PLANT, TexamonType.def(Move.ENTANGLE), Type.PLANT, 80, 105,
-			65, 90),
+		"A flower that attacks predators with its long sharp leaves.",
+		MoveSet.PLANT, TexamonType.def(Move.ENTANGLE), Type.PLANT, 80, 105, 65,
+		90),
 	TELECAT("Telecat",
-			"A fearful cat that has learned to teleport away from battle.",
-			MoveSet.NORMAL, TexamonType.def(Move.STOMP), Type.NORMAL, 55, 50,
-			45, 90),
+		"A fearful cat that has learned to teleport away from battle.",
+		MoveSet.NORMAL, TexamonType.def(Move.STOMP), Type.NORMAL, 55, 50, 45,
+		90),
 	WATTLE("Wattle",
-			"A cute turtle that likes to sit in water at passing people.",
-			MoveSet.WATER, TexamonType.def(Move.BOIL), Type.WATER, 95, 100, 85,
-			65);
+		"A cute turtle that likes to sit in water at passing people.",
+		MoveSet.WATER, TexamonType.def(Move.BOIL), Type.WATER, 95, 100, 85, 65);
 
 	private static Move[] def(Move one) {
 		return TexamonType.def(one, Move.BLANK, Move.BLANK, Move.BLANK);
@@ -95,7 +88,7 @@ public enum TexamonType {
 	private int baseSPD;
 
 	private TexamonType(String name, String descr, Move[] learnable,
-			Move[] defMoves, Type type, int hp, int atk, int def, int spd) {
+		Move[] defMoves, Type type, int hp, int atk, int def, int spd) {
 		this.fullName = name;
 		this.description = descr;
 		this.learnableMoves = learnable;

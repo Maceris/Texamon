@@ -54,7 +54,6 @@ import com.Omega.menus.WindowManager;
 import com.Omega.menus.WindowStyle;
 import com.Omega.util.DuplicateEntry;
 import com.Omega.util.IntegerTree;
-import com.Omega.util.Random;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -70,6 +69,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -227,7 +227,7 @@ public class MainClass extends Activity implements Runnable {
 
 		MovableObject player;
 
-		private Random rand;
+		private SecureRandom rand;
 
 		AlertDialog.Builder comingsoonbuilder = new AlertDialog.Builder(
 			this.getContext());
@@ -259,7 +259,9 @@ public class MainClass extends Activity implements Runnable {
 
 			this.gameData = newData;
 
-			this.rand = new Random();
+			this.rand = new SecureRandom();
+			// throw away
+			this.rand.nextInt();
 
 			TMXMapReader reader = new TMXMapReader();
 			Map aurageMap = null;
@@ -971,8 +973,10 @@ public class MainClass extends Activity implements Runnable {
 		}
 
 		public boolean didEncounter() {
-			int c = this.rand.getIntBetween(1, 28);
-			if (c == 16) {
+			// create a number on [0, 29)
+			int c = this.rand.nextInt(29);
+			// just a random magic number between 0 and 29.
+			if (c == 2) {
 				return true;
 			}
 			return false;
@@ -996,7 +1000,7 @@ public class MainClass extends Activity implements Runnable {
 				this.winHeight / 4, Color.RED, 1);
 			// TODO start menu
 
-		} // end of public void firstTimeScreen(Canvas canvas)
+		}
 
 		public void gameOverScreen(Canvas canvas) {
 			// set the background color to black
@@ -1010,7 +1014,7 @@ public class MainClass extends Activity implements Runnable {
 				this.winWidth / 2, 200, Color.RED, 1);
 			// TODO game over screen
 			// draw all of your objects
-		} // end of public void gameOverScreen(Canvas canvas)
+		}
 
 		public void load() {
 

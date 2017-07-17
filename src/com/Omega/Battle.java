@@ -17,7 +17,8 @@
 package com.Omega;
 
 import android.util.Log;
-import com.Omega.util.Random;
+
+import java.security.SecureRandom;
 
 /**
  * State information and helper methods for a battle that is taking place.
@@ -29,7 +30,7 @@ public class Battle {
 	/**
 	 * The RNG for battles
 	 */
-	private static Random rand = new Random();
+	private static SecureRandom rand = new SecureRandom();
 
 	/**
 	 * Calculates the damage done to an opponent based on stats of both parties,
@@ -47,7 +48,7 @@ public class Battle {
 		float atk = attacker.getSpecies().getATK();
 		float def = defender.getSpecies().getDEF();
 		float ch = 1; // modify this
-		float r = 100 - Battle.rand.getIntBetween(0, 15);
+		float r = 100 - Battle.rand.nextInt(16);
 		double stab = 1; // modify this
 		double type1 = 1; // modify this
 		int damagedone = 0;
@@ -57,7 +58,7 @@ public class Battle {
 		type1 =
 			Battle.getTypeDamage(attacker.getSpecies().getType(), defender
 				.getSpecies().getType());
-		int rd = Battle.rand.getIntBetween(0, 400);
+		int rd = Battle.rand.nextInt(401);
 		if (rd == 7) {
 			ch = 2;
 		}
@@ -82,13 +83,13 @@ public class Battle {
 		// normal is 8
 
 		if (isGreatBall) {
-			randOne = Battle.rand.getIntBetween(0, 150);
+			randOne = Battle.rand.nextInt(151);
 		}
 		else {
-			randOne = Battle.rand.getIntBetween(0, 255);
+			randOne = Battle.rand.nextInt(256);
 		}
 		if (randOne <= 75) {
-			float randTwo = Battle.rand.getIntBetween(0, 255);
+			float randTwo = Battle.rand.nextInt(256);
 			float f;
 			f =
 				(foe.getMaxHP() * 255) / (isGreatBall ? 12 : 8)

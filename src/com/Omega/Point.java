@@ -17,7 +17,6 @@
 package com.Omega;
 
 /**
- *
  * A 2d point with float values
  *
  * @author Ches Burks

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2016 David Burks
+ * Copyright (C) 2016, 2017 David Burks
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -15,8 +15,6 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
 package com.Omega;
-
-import com.Omega.event.EventManager;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -39,6 +37,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import com.Omega.event.EventHandler;
+import com.Omega.event.EventManager;
 import com.Omega.event.Listener;
 import com.Omega.menus.Alignment;
 import com.Omega.menus.EvtDown;
@@ -87,7 +86,6 @@ public class MainClass extends Activity implements Runnable {
 
 	private static class MyView extends View //
 	{
-
 		/**
 		 * Create a bitmap based on the data in the map structure.
 		 *
@@ -216,9 +214,6 @@ public class MainClass extends Activity implements Runnable {
 		}
 
 		IntegerTree idTree;
-		boolean dragging; // are we dragging some object
-		float startMouseDragX;
-		float startMouseDragY;
 
 		boolean doLogging = false;
 		boolean firstTime; // indicates that this is the beginning of a run
@@ -243,8 +238,6 @@ public class MainClass extends Activity implements Runnable {
 			this.getContext());
 
 		AlertDialog erroralert;
-
-		MovableObject startButton;
 
 		Context thisContext;
 		int winWidth = 0;
@@ -1001,13 +994,7 @@ public class MainClass extends Activity implements Runnable {
 
 			this.myDrawText(canvas, "Texamon", 26, this.winWidth / 2,
 				this.winHeight / 4, Color.RED, 1);
-
-			if (this.startButton != null) {
-				this.startButton.setX(this.winWidth / 2
-					- this.startButton.getWidth() / 2);
-				this.startButton.setY(this.winHeight / 2);
-				this.startButton.draw(canvas);
-			}
+			// TODO start menu
 
 		} // end of public void firstTimeScreen(Canvas canvas)
 
@@ -1021,14 +1008,7 @@ public class MainClass extends Activity implements Runnable {
 				this.winWidth / 2, 125, Color.GREEN, 1);
 			this.myDrawText(canvas, "Wins: " + "  Losses: ", 16,
 				this.winWidth / 2, 200, Color.RED, 1);
-
-			if (this.startButton != null) {
-				this.startButton.setX(this.winWidth / 2
-					- this.startButton.getWidth() / 2);
-				this.startButton.setY(280);
-				this.startButton.draw(canvas);
-			}
-
+			// TODO game over screen
 			// draw all of your objects
 		} // end of public void gameOverScreen(Canvas canvas)
 
@@ -1118,11 +1098,6 @@ public class MainClass extends Activity implements Runnable {
 
 			this.winHeight = metrics.heightPixels;
 			this.winWidth = metrics.widthPixels;
-			this.startButton =
-				new MovableObject("start.png", R.drawable.start,
-					(this.winWidth / 2) - (this.winWidth / 4),
-					(this.winHeight / 2) - (this.winHeight / 16),
-					this.winWidth / 2, this.winHeight / 8, this.getResources());
 			this.player =
 				new MovableObject("player.png", R.drawable.player,
 					(this.winWidth / 2) - 3, (this.winHeight / 2) - 3, 7, 7,
@@ -1241,9 +1216,15 @@ public class MainClass extends Activity implements Runnable {
 
 		@Override
 		protected void onRestoreInstanceState(Parcelable state1) {
-			// TODO Save the state and restore here
+			// TODO restore the state
 			super.onRestoreInstanceState(state1);
 			this.canvasSizeDirty = true;
+		}
+
+		@Override
+		protected Parcelable onSaveInstanceState() {
+			// TODO save the state
+			return super.onSaveInstanceState();
 		}
 
 		// use this if you want to move an object with the finger
@@ -1268,8 +1249,6 @@ public class MainClass extends Activity implements Runnable {
 				if (this.doLogging) {
 					Log.i("tag", "inside ACTION_DOWN x=" + x + "  y=" + y);
 				}
-				this.startMouseDragX = x;
-				this.startMouseDragY = y;
 
 				// buttons
 
@@ -1296,57 +1275,13 @@ public class MainClass extends Activity implements Runnable {
 					Log.i("tag", "inside ACTION_MOVE x=" + xPos + "  y=" + yPos);
 				}
 
-				boolean allowDragging = true;
-				// set your boundaries so you don't move your object off the
-				// screen
-				if (xPos < 20) {
-					allowDragging = false;
-				}
-				else if (xPos >= this.winWidth - 20) {
-					allowDragging = false;
-				}
-				if (yPos < 20) {
-					allowDragging = false;
-				}
-				else if (yPos >= this.winHeight - 20) {
-					allowDragging = false;
-				}
-
-				if (this.dragging && allowDragging) {
-					// now move your object if you have an object to drag
-					// remember that the xPos and yPos is the new position of
-					// where the finger is, not the upper left hand corner of
-					// the object
-
-				}
-
 			}
 			else if (e.getAction() == MotionEvent.ACTION_UP) {
-				// the finger is lifted
-				if (this.dragging) {
-					// you might want to move your object back to the
-					// start of the drag if for some reason you
-					// you decide your object should not be placed there
-					// for example in checkers if your checker cannot
-					// be moved to the new position because it is an illegal
-					// move
-					// startMouseDragX and startMouseDragY
-					// dragObjectToNewPosition(ship,startMouseDragX,
-					// startMouseDragY, x, y);
-				}
-
-				this.dragging = false;
-				this.startMouseDragX = -1;
-				this.startMouseDragY = -1;
 
 				// if they have pressed the start button
 				// then we will start a new game
 				if (this.gameData.getState() == GameState.MAIN_MENU) {
-					if (this.startButton.getRect().contains(x, y)) {
-						this.gameData.setState(GameState.INGAME);
-
-						this.startButton.setX(-200);
-					}
+					// TODO start game
 				}
 			}
 
@@ -1566,14 +1501,14 @@ public class MainClass extends Activity implements Runnable {
 		}
 	}
 
-	static String savedata;
-	MyView theView;
-	Thread myThread;
-	int threadDelay;
+	private static String savedata;
+	private MyView theView;
+	private Thread myThread;
+	private int threadDelay;
 
-	GameData gameData;
+	private GameData gameData;
 
-	boolean doLogging = false;
+	private boolean doLogging = false;
 
 	/** Called when the activity is first created. */
 	@Override

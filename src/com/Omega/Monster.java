@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2016 David Burks
+ * Copyright (C) 2016, 2017 David Burks
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -39,7 +39,7 @@ public class Monster implements Saveable {
 	private int xp;
 
 	private Move[] moves;
-	private int[] movePPs;
+	private byte[] movePPs;
 
 	private String nickname;
 	private String location;
@@ -144,14 +144,27 @@ public class Monster implements Saveable {
 	}
 
 	/**
-	 * Returns the move at the specified index. This should be between 0 and
-	 * {@link Monster#MAX_MOVES}
+	 * Returns the move at the specified index. The index should be between 0
+	 * and {@link Monster#MAX_MOVES}
 	 *
 	 * @param index the index of the move
 	 * @return the move at that index, or null if there is not one there
 	 */
 	public Move getMove(int index) {
 		return this.moves[index];
+	}
+
+	/**
+	 * Returns the number of times the the move at the given index can be used
+	 * before running out. The index should be between 0 and
+	 * {@link Monster#MAX_MOVES}
+	 *
+	 * @param index the index of the move
+	 * @return the number of moves left for the given index, or null if there is
+	 *         not one there
+	 */
+	public byte getMovePP(int index) {
+		return this.movePPs[index];
 	}
 
 	/**
@@ -257,6 +270,28 @@ public class Monster implements Saveable {
 		}
 		return false;
 
+	}
+
+	/**
+	 * Sets the PP for the move (how many times the move can be used before it
+	 * runs out of uses) at the given index to the given move. If the index is
+	 * invalid or the value of the PP is negative, it returns false. If the move
+	 * was set, returns true.
+	 *
+	 * @param index the index of the move
+	 * @param pp how many uses the move has left
+	 * @return true on success, false if there was a problem and it was not set
+	 */
+	public boolean setMovePP(int index, byte pp) {
+		if (index < 0 || index >= this.moves.length) {
+			return false;
+		}
+		if (pp < 0) {
+			return false;
+		}
+
+		this.movePPs[index] = pp;
+		return true;
 	}
 
 	/**
